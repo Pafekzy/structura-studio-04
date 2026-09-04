@@ -11,4 +11,3 @@ Thumbs.db
 
 # Developer Sandbox persistence
 /data/
-data/*.json

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getFirebaseAdmin, getFirebaseFirestore } from '../auth/firebaseAdmin';
+import { ensureDemoDataSeeded, DEMO_USERS } from '../data/demoSeed';
 
 export type PrimaryRole = 
   | 'OWNER_CLIENT'
@@ -16,7 +17,8 @@ export type ProfessionalVerificationStatus =
   | 'PENDING'
   | 'VERIFIED'
   | 'REJECTED'
-  | 'EXPIRED';
+  | 'EXPIRED'
+  | 'UNVERIFIED';
 
 export interface UserRoleDetails {
   entityType?: 'Individual' | 'Organization';
@@ -29,6 +31,8 @@ export interface UserRoleDetails {
   professionalBody?: string;
   registrationNumber?: string;
   companyName?: string;
+  licenseNumber?: string;
+  jurisdiction?: string;
   yearsOperating?: number;
   specialties?: string[];
 }
@@ -49,6 +53,7 @@ export interface UserProfile {
   updatedAt: string;
   // Optional password hash used exclusively for isolated local developer sandbox when external Firebase is unconfigured
   passwordHash?: string;
+  isDemo?: boolean;
 }
 
 export interface IUserRepository {
@@ -132,6 +137,7 @@ class FileUserRepository implements IUserRepository {
       }
     }
     this.filePath = path.join(dir, 'users.json');
+    ensureDemoDataSeeded();
     this.loadFromFile();
   }
 
@@ -238,7 +244,9 @@ export class UserRepository implements IUserRepository {
     } catch (e) {
       // Fallback
     }
-    return this.fileRepo.findById(id);
+    const fromFile = await this.fileRepo.findById(id);
+    if (fromFile) return fromFile;
+    return DEMO_USERS.find(u => u.id === id) || null;
   }
 
   async findByAuthUserId(authUserId: string): Promise<UserProfile | null> {
@@ -248,7 +256,9 @@ export class UserRepository implements IUserRepository {
     } catch (e) {
       // Fallback
     }
-    return this.fileRepo.findByAuthUserId(authUserId);
+    const fromFile = await this.fileRepo.findByAuthUserId(authUserId);
+    if (fromFile) return fromFile;
+    return DEMO_USERS.find(u => u.authUserId === authUserId) || null;
   }
 
   async findByEmail(email: string): Promise<UserProfile | null> {
@@ -258,7 +268,10 @@ export class UserRepository implements IUserRepository {
     } catch (e) {
       // Fallback
     }
-    return this.fileRepo.findByEmail(email);
+    const fromFile = await this.fileRepo.findByEmail(email);
+    if (fromFile) return fromFile;
+    const normalized = email.toLowerCase().trim();
+    return DEMO_USERS.find(u => u.email.toLowerCase().trim() === normalized) || null;
   }
 
   async update(id: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {

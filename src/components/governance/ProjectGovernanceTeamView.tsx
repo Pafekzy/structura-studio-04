@@ -59,11 +59,18 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
     setError(null);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (idToken) {
+        headers['Authorization'] = `Bearer ${idToken}`;
+      } else {
+        // In developer demo / sandbox mode, pass the demo session token for the active role
+        headers['Authorization'] = 'Bearer demo_sess_owner';
+      }
+
       const res = await fetch(`/api/projects/${project.id}/governance`, {
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (res.ok) {
@@ -164,6 +171,11 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
               Project Governance Team & Fiduciary Vacancies
             </h3>
+            {project?.isDemo && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                DEMO SANDBOX
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Strict four-role accountability: Project authority requires an explicit appointment. Qualification alone is not authority.

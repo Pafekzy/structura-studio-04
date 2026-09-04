@@ -4,8 +4,12 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { authRouter } from './server/routes/authRoutes';
 import { governanceRouter } from './server/routes/governanceRoutes';
+import { ensureDemoDataSeeded } from './server/data/demoSeed';
 
 dotenv.config();
+
+// Ensure canonical development & demo dataset is seeded for local persistence
+ensureDemoDataSeeded();
 
 const app = express();
 const PORT = 3000;

@@ -124,9 +124,26 @@ function AppContent() {
           if (Array.isArray(backendProjects) && backendProjects.length > 0) {
             setProjects((prev) => {
               const map = new Map<string, ConstructionProject>();
-              backendProjects.forEach((p: ConstructionProject) => map.set(p.id, p));
-              prev.forEach((p) => {
-                if (!map.has(p.id)) map.set(p.id, p);
+              prev.forEach((p) => map.set(p.id, p));
+              backendProjects.forEach((bp: any) => {
+                const existing = map.get(bp.id);
+                if (existing) {
+                  map.set(bp.id, {
+                    ...existing,
+                    ...bp,
+                    milestones: existing.milestones?.length ? existing.milestones : (bp.milestones || []),
+                    boq: existing.boq?.length ? existing.boq : (bp.boq || []),
+                    sitePhotos: existing.sitePhotos?.length ? existing.sitePhotos : (bp.sitePhotos || []),
+                    periodicLogs: existing.periodicLogs?.length ? existing.periodicLogs : (bp.periodicLogs || []),
+                    situationReports: existing.situationReports?.length ? existing.situationReports : (bp.situationReports || []),
+                    curveData: existing.curveData?.length ? existing.curveData : (bp.curveData || []),
+                    landSpecs: existing.landSpecs || bp.landSpecs,
+                    floorPlanSpecs: existing.floorPlanSpecs || bp.floorPlanSpecs,
+                    materialSpecs: existing.materialSpecs || bp.materialSpecs,
+                  });
+                } else {
+                  map.set(bp.id, bp);
+                }
               });
               return Array.from(map.values());
             });

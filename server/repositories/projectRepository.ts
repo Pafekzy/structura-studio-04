@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getFirebaseFirestore } from '../auth/firebaseAdmin';
+import { ensureDemoDataSeeded, getDemoProjectById, getDemoAppointmentsByProject } from '../data/demoSeed';
 
 export type ProjectRole = 
   | 'OWNER_CLIENT'
@@ -24,6 +25,7 @@ export interface ProjectAppointment {
   userEmail?: string;
   userName?: string;
   role: ProjectRole;
+  discipline?: string;
   appointmentStatus: AppointmentStatus;
   invitedByUserId: string;
   invitedAt: string;
@@ -31,6 +33,7 @@ export interface ProjectAppointment {
   activatedAt?: string;
   endedAt?: string;
   reason?: string;
+  isDemo?: boolean;
 }
 
 export interface StoredProject {
@@ -49,6 +52,7 @@ export interface StoredProject {
   status: 'ACTIVE' | 'ARCHIVED' | 'PLANNING';
   createdAt: string;
   updatedAt: string;
+  isDemo?: boolean;
 }
 
 export interface IProjectRepository {
@@ -182,6 +186,7 @@ class FileProjectRepository implements IProjectRepository {
     if (!fs.existsSync(this.appointmentsFile)) {
       fs.writeFileSync(this.appointmentsFile, JSON.stringify([], null, 2));
     }
+    ensureDemoDataSeeded();
   }
 
   private readProjects(): StoredProject[] {
@@ -236,7 +241,7 @@ class FileProjectRepository implements IProjectRepository {
       appts.filter(a => a.userId === userId && a.appointmentStatus === 'ACTIVE').map(a => a.projectId)
     );
 
-    return projects.filter(p => p.ownerUserId === userId || activeApptProjectIds.has(p.id));
+    return projects.filter(p => p.ownerUserId === userId || activeApptProjectIds.has(p.id) || p.isDemo);
   }
 
   async updateProject(id: string, updates: Partial<StoredProject>): Promise<StoredProject | null> {
@@ -299,8 +304,12 @@ class HybridProjectRepository implements IProjectRepository {
   createProject(project: StoredProject): Promise<StoredProject> {
     return this.getDelegate().createProject(project);
   }
-  getProjectById(id: string): Promise<StoredProject | null> {
-    return this.getDelegate().getProjectById(id);
+  async getProjectById(id: string): Promise<StoredProject | null> {
+    const project = await this.getDelegate().getProjectById(id);
+    if (!project) {
+      return getDemoProjectById(id);
+    }
+    return project;
   }
   listProjectsByOrg(organizationId: string): Promise<StoredProject[]> {
     return this.getDelegate().listProjectsByOrg(organizationId);
@@ -317,11 +326,21 @@ class HybridProjectRepository implements IProjectRepository {
   getAppointmentById(id: string): Promise<ProjectAppointment | null> {
     return this.getDelegate().getAppointmentById(id);
   }
-  getAppointmentByProjectAndUser(projectId: string, userId: string): Promise<ProjectAppointment | null> {
-    return this.getDelegate().getAppointmentByProjectAndUser(projectId, userId);
+  async getAppointmentByProjectAndUser(projectId: string, userId: string): Promise<ProjectAppointment | null> {
+    const appt = await this.getDelegate().getAppointmentByProjectAndUser(projectId, userId);
+    if (!appt) {
+      const demoAppts = getDemoAppointmentsByProject(projectId);
+      return demoAppts.find(a => a.userId === userId) || null;
+    }
+    return appt;
   }
-  listAppointmentsByProject(projectId: string): Promise<ProjectAppointment[]> {
-    return this.getDelegate().listAppointmentsByProject(projectId);
+  async listAppointmentsByProject(projectId: string): Promise<ProjectAppointment[]> {
+    const appts = await this.getDelegate().listAppointmentsByProject(projectId);
+    if (!appts || appts.length === 0) {
+      const demoAppts = getDemoAppointmentsByProject(projectId);
+      if (demoAppts.length > 0) return demoAppts;
+    }
+    return appts;
   }
   listAppointmentsByUser(userId: string): Promise<ProjectAppointment[]> {
     return this.getDelegate().listAppointmentsByUser(userId);

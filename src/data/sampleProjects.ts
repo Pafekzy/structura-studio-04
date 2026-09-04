@@ -7,6 +7,14 @@ import materialSpecificationsImage from '../assets/images/architectural_material
 export const INITIAL_PROJECTS: ConstructionProject[] = [
   {
     id: 'proj-horizon-villa',
+    organizationId: 'org-demo-vanguard',
+    projectType: 'RESIDENTIAL_ESTATE',
+    description: 'Contemporary Minimalist 3-story luxury estate with hybrid steel-concrete core, net-zero MEP microgrid and bespoke luxury finishes. [DEMO DATASET]',
+    currency: 'USD',
+    currentStage: 'Roofing & Glazing',
+    ownerUserId: 'usr_demo_owner',
+    status: 'ACTIVE',
+    isDemo: true,
     name: 'The Horizon Pavilion - 680 m² Luxury Estate',
     clientName: 'Alexander & Elena Vance',
     contractorName: 'Aegis EPC Infrastructure Ltd.',
@@ -538,6 +546,14 @@ export const INITIAL_PROJECTS: ConstructionProject[] = [
   
   {
     id: 'proj-apex-commercial',
+    organizationId: 'org-demo-vanguard',
+    projectType: 'COMMERCIAL_OFFICE',
+    description: 'Biophilic 4-story commercial office building featuring mass timber glulam frame and net-zero geothermal HVAC. [DEMO DATASET]',
+    currency: 'USD',
+    currentStage: 'Superstructure Frame',
+    ownerUserId: 'usr_demo_owner',
+    status: 'ACTIVE',
+    isDemo: true,
     name: 'Apex Innovation Hub - 1,450 m² Biophilic Office',
     clientName: 'Meridian Capital Partners',
     contractorName: 'Turner & Townsend Global EPC',

@@ -28,6 +28,33 @@ export interface SandboxSession {
 
 export const sandboxSessionStore = new Map<string, SandboxSession>();
 
+// Pre-seed canonical development sandbox sessions for the four demo roles
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+sandboxSessionStore.set('demo_sess_owner', {
+  uid: 'usr_demo_owner',
+  email: 'owner@structura.build',
+  createdAt: Date.now(),
+  expiresAt: Date.now() + ONE_YEAR_MS,
+});
+sandboxSessionStore.set('demo_sess_director', {
+  uid: 'usr_demo_director',
+  email: 'director@structura.build',
+  createdAt: Date.now(),
+  expiresAt: Date.now() + ONE_YEAR_MS,
+});
+sandboxSessionStore.set('demo_sess_contractor', {
+  uid: 'usr_demo_contractor',
+  email: 'contractor@structura.build',
+  createdAt: Date.now(),
+  expiresAt: Date.now() + ONE_YEAR_MS,
+});
+sandboxSessionStore.set('demo_sess_qaqc', {
+  uid: 'usr_demo_qaqc',
+  email: 'auditor@structura.build',
+  createdAt: Date.now(),
+  expiresAt: Date.now() + ONE_YEAR_MS,
+});
+
 export function getAuthMode(): 'firebase' | 'sandbox' {
   if (process.env.STRUCTURA_AUTH_MODE === 'firebase') return 'firebase';
   if (process.env.STRUCTURA_AUTH_MODE === 'sandbox') return 'sandbox';

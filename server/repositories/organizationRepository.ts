@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getFirebaseAdmin, getFirebaseFirestore } from '../auth/firebaseAdmin';
+import { ensureDemoDataSeeded, DEMO_ORGANIZATION } from '../data/demoSeed';
 
 export type OrganizationType = 
   | 'INDIVIDUAL_DEVELOPER'
@@ -35,17 +36,18 @@ export interface Organization {
   jurisdiction: string;
   country: string;
   address?: string;
-  createdByUserId: string;
-  ownerUserId: string;
+  createdByUserId?: string;
+  ownerUserId?: string;
   verificationStatus: OrganizationVerificationStatus;
   ownerAuthorityStatus: OwnerAuthorityStatus;
   status: OrganizationStatus;
   createdAt: string;
   updatedAt: string;
+  isDemo?: boolean;
 }
 
-export type OrganizationRole = 'OWNER_ADMIN' | 'MEMBER';
-export type MembershipStatus = 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+export type OrganizationRole = 'OWNER_ADMIN' | 'PROJECT_DIRECTOR' | 'CONTRACTOR' | 'QAQC_AUDITOR' | 'MEMBER' | 'OBSERVER';
+export type MembershipStatus = 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'REVOKED';
 
 export interface OrganizationMembership {
   id: string;
@@ -57,6 +59,7 @@ export interface OrganizationMembership {
   invitedAt?: string;
   acceptedAt?: string;
   createdAt: string;
+  isDemo?: boolean;
 }
 
 export interface IOrganizationRepository {
@@ -163,6 +166,7 @@ class FileOrganizationRepository implements IOrganizationRepository {
     if (!fs.existsSync(this.membersFile)) {
       fs.writeFileSync(this.membersFile, JSON.stringify([], null, 2));
     }
+    ensureDemoDataSeeded();
   }
 
   private readOrgs(): Organization[] {
@@ -259,8 +263,12 @@ class HybridOrganizationRepository implements IOrganizationRepository {
   createOrganization(org: Organization): Promise<Organization> {
     return this.getDelegate().createOrganization(org);
   }
-  getOrganizationById(id: string): Promise<Organization | null> {
-    return this.getDelegate().getOrganizationById(id);
+  async getOrganizationById(id: string): Promise<Organization | null> {
+    const org = await this.getDelegate().getOrganizationById(id);
+    if (!org && id === DEMO_ORGANIZATION.id) {
+      return DEMO_ORGANIZATION;
+    }
+    return org;
   }
   listOrganizationsByUser(userId: string): Promise<Organization[]> {
     return this.getDelegate().listOrganizationsByUser(userId);

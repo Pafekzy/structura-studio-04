@@ -205,6 +205,7 @@ export interface ConstructionProject {
   currentStage?: string;
   ownerUserId?: string;
   status?: 'ACTIVE' | 'ARCHIVED' | 'PLANNING';
+  isDemo?: boolean;
 }
 
 // Estimation and Cost Takeoff Types
