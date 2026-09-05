@@ -15,6 +15,8 @@ import {
 import { ConstructionProject, NavigationTab } from '../../types';
 import { DirectLinePanel } from './DirectLinePanel';
 import { RFIRegisterPanel } from './RFIRegisterPanel';
+import { MilestonesRegisterPanel } from './MilestonesRegisterPanel';
+import { ProjectEvidencePanel } from './ProjectEvidencePanel';
 import { useAuth } from '../../context/AuthContext';
 
 interface ProjectOperationsWorkspaceProps {
@@ -29,7 +31,7 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
   onOpenAdvisorModal,
 }) => {
   const { userProfile, user } = useAuth();
-  const [activeSubTab, setActiveSubTab] = useState<'direct_line' | 'rfis'>('direct_line');
+  const [activeSubTab, setActiveSubTab] = useState<'direct_line' | 'rfis' | 'milestones' | 'evidence'>('milestones');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -62,7 +64,7 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
             </h1>
 
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Governed operational coordination, bilateral direct lines, and audited RFI resolution. Authority derives strictly from active appointments on this project.
+              Governed operational coordination, bilateral direct lines, milestone technical submissions, and verified project evidence. Authority derives strictly from active appointments on this project.
             </p>
           </div>
 
@@ -95,7 +97,31 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 mt-8 pt-4 border-t border-white/10">
+        <div className="flex flex-wrap items-center gap-2 mt-8 pt-4 border-t border-white/10">
+          <button
+            onClick={() => setActiveSubTab('milestones')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'milestones'
+                ? 'bg-amber-500 text-slate-950 shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Milestones & Technical Review</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('evidence')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'evidence'
+                ? 'bg-amber-500 text-slate-950 shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Project Evidence Register</span>
+          </button>
+
           <button
             onClick={() => setActiveSubTab('direct_line')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
@@ -117,13 +143,17 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Request for Information (RFI) Register</span>
+            <span>RFI Register</span>
           </button>
         </div>
       </div>
 
       {/* Sub-tab view */}
-      {activeSubTab === 'direct_line' ? (
+      {activeSubTab === 'milestones' ? (
+        <MilestonesRegisterPanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'evidence' ? (
+        <ProjectEvidencePanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'direct_line' ? (
         <DirectLinePanel projectId={project.id} isDemo={project.isDemo} />
       ) : (
         <RFIRegisterPanel projectId={project.id} isDemo={project.isDemo} />

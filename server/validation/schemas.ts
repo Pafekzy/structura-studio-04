@@ -107,3 +107,93 @@ export const acknowledgeRFISchema = z.object({
 export const closeRFISchema = z.object({
   closingNotes: z.string().max(1000).optional(),
 });
+
+// Part J: Project Milestone Creation & Status Schema (Sprint 04B)
+export const createMilestoneSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
+  sequence: z.number().int().min(1),
+  discipline: z.string().min(2).max(100),
+  requiresProjectDirectorReview: z.boolean().default(true),
+  requiresQaQcReview: z.boolean().default(true),
+  requiresOwnerApproval: z.boolean().default(true),
+  costAllocationUSD: z.number().min(0).optional().default(0),
+  plannedStartDate: z.string().optional(),
+  plannedEndDate: z.string().optional(),
+});
+
+export const updateMilestoneStatusSchema = z.object({
+  status: z.enum([
+    'NOT_STARTED',
+    'IN_PROGRESS',
+    'SUBMITTED_FOR_REVIEW',
+    'TECHNICAL_REVIEW',
+    'QA_QC_HOLD',
+    'READY_FOR_OWNER_REVIEW',
+    'APPROVED',
+    'REJECTED',
+    'COMPLETE',
+  ]),
+});
+
+// Part K: Project Evidence Metadata Schema (Sprint 04B)
+export const createEvidenceSchema = z.object({
+  milestoneId: z.string().optional(),
+  evidenceType: z.enum([
+    'SITE_PHOTO',
+    'DRAWING',
+    'DOCUMENT',
+    'TEST_RESULT',
+    'PROGRESS_RECORD',
+    'TECHNICAL_ATTACHMENT',
+    'CONTRACTOR_SUBMISSION',
+    'OTHER',
+  ]),
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200),
+  description: z.string().min(5, 'Description must be at least 5 characters').max(2000),
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(100),
+  fileSize: z.number().min(0),
+  storageProvider: z.enum([
+    'METADATA_ONLY',
+    'LOCAL_SANDBOX',
+    'CLOUD_STORAGE_PROVISIONAL',
+  ]).default('METADATA_ONLY'),
+  storageStatus: z.enum([
+    'RECORDED_METADATA',
+    'REFERENCED',
+    'STORED',
+  ]).default('RECORDED_METADATA'),
+  storageReference: z.string().min(1, 'Storage reference/tag is required').max(200),
+  metadata: z.record(z.string(), z.any()).optional(),
+});
+
+// Part L: Contractor Milestone Submission Schema (Sprint 04B)
+export const createSubmissionDraftSchema = z.object({
+  title: z.string().min(3, 'Submission title must be at least 3 characters').max(200),
+  summary: z.string().min(10, 'Executive summary must be at least 10 characters').max(3000),
+  contractorNotes: z.string().max(3000).optional().default(''),
+  evidenceIds: z.array(z.string()).optional().default([]),
+});
+
+export const updateSubmissionDraftSchema = z.object({
+  title: z.string().min(3).max(200).optional(),
+  summary: z.string().min(10).max(3000).optional(),
+  contractorNotes: z.string().max(3000).optional(),
+  evidenceIds: z.array(z.string()).optional(),
+});
+
+export const submitPackageSchema = z.object({
+  notes: z.string().max(2000).optional(),
+});
+
+// Part M: Senior Project Director Technical Review Schema (Sprint 04B)
+export const technicalReviewDecisionSchema = z.object({
+  decision: z.enum([
+    'REQUEST_CHANGES',
+    'ACCEPT_TECHNICAL_SUBMISSION',
+    'ESCALATE',
+    'SEND_TO_QA_QC',
+  ]),
+  reviewNotes: z.string().min(5, 'Review notes must be at least 5 characters').max(4000),
+});

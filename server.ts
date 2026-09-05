@@ -6,6 +6,7 @@ import { authRouter } from './server/routes/authRoutes';
 import { governanceRouter } from './server/routes/governanceRoutes';
 import { directLineRouter } from './server/routes/directLineRoutes';
 import { rfiRouter } from './server/routes/rfiRoutes';
+import { milestoneRouter } from './server/routes/milestoneRoutes';
 import { ensureDemoDataSeeded } from './server/data/demoSeed';
 
 dotenv.config();
@@ -28,6 +29,9 @@ app.use('/api', governanceRouter);
 // Project Operations: Direct Line & RFI Routes (Sprint 04A)
 app.use('/api', directLineRouter);
 app.use('/api', rfiRouter);
+
+// Project Operations: Milestones, Evidence & Technical Review (Sprint 04B)
+app.use('/api', milestoneRouter);
 
 // Lazy initialization of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
