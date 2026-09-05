@@ -1,12 +1,13 @@
 export type MonitoringCadence = 'daily' | 'weekly' | 'fortnightly' | 'monthly';
 
-export type NavigationTab = 
-  | 'cockpit' 
-  | 'monitoring' 
-  | 'inspection' 
-  | 'budget' 
-  | 'finished_render' 
+export type NavigationTab =
+  | 'cockpit'
+  | 'monitoring'
+  | 'inspection'
+  | 'budget'
+  | 'finished_render'
   | 'new_estimator'
+  | 'operations'
   | 'stakeholder_hub'
   | 'stakeholder_owner'
   | 'stakeholder_director'
@@ -162,11 +163,11 @@ export interface ConstructionProject {
   actualCostIncurredUSD: number;
   forecastAtCompletionUSD: number;
   confidenceScore: number;
-  
+
   landSpecs: LandSpecifications;
   floorPlanSpecs: FloorPlanSpecifications;
   materialSpecs: MaterialSpecifications;
-  
+
   finishedBuildingRenderUrl: string;
   finishedBuildingRenderAltViews: string[];
   proposedBuildingRenderUrl?: string;
@@ -181,13 +182,13 @@ export interface ConstructionProject {
     description: string;
   }>;
   architecturalPrompt: string;
-  
+
   milestones: ConstructionMilestone[];
   boq: BOQItem[];
   sitePhotos: SitePhotoInspection[];
   periodicLogs: PeriodicLogEntry[];
   situationReports: SituationReport[];
-  
+
   curveData: Array<{
     month: string;
     plannedBudget: number;
@@ -273,7 +274,7 @@ export interface EstimateSpecsPayload {
 }
 
 // Structura Authentication & User Profile Domain Models (Sprint 02)
-export type PrimaryRole = 
+export type PrimaryRole =
   | 'OWNER_CLIENT'
   | 'SENIOR_PROJECT_DIRECTOR'
   | 'GENERAL_CONTRACTOR'
@@ -281,7 +282,7 @@ export type PrimaryRole =
 
 export type AccountStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
 export type IdentityStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
-export type ProfessionalVerificationStatus = 
+export type ProfessionalVerificationStatus =
   | 'NOT_REQUIRED'
   | 'NOT_STARTED'
   | 'PENDING'
@@ -299,6 +300,9 @@ export interface UserRoleDetails {
   primaryDiscipline?: string;
   professionalBody?: string;
   registrationNumber?: string;
+  licenseNumber?: string;
+  jurisdiction?: string;
+  claimedCredentials?: string;
   companyName?: string;
   yearsOperating?: number;
   specialties?: string[];
@@ -338,7 +342,7 @@ export interface AuthSessionState {
 // Organization Governance Domain Models (Sprint 03)
 // ==========================================
 
-export type OrganizationType = 
+export type OrganizationType =
   | 'INDIVIDUAL_DEVELOPER'
   | 'REAL_ESTATE_DEVELOPER'
   | 'CORPORATE'
@@ -346,19 +350,19 @@ export type OrganizationType =
   | 'PUBLIC_SECTOR'
   | 'OTHER';
 
-export type OrganizationVerificationStatus = 
+export type OrganizationVerificationStatus =
   | 'NOT_STARTED'
   | 'PENDING'
   | 'VERIFIED'
   | 'REJECTED';
 
-export type OwnerAuthorityStatus = 
+export type OwnerAuthorityStatus =
   | 'NOT_STARTED'
   | 'PENDING'
   | 'VERIFIED'
   | 'REJECTED';
 
-export type OrganizationStatus = 
+export type OrganizationStatus =
   | 'ACTIVE'
   | 'SUSPENDED'
   | 'ARCHIVED';
@@ -399,13 +403,13 @@ export interface OrganizationMembership {
 // Project Governance Appointments (Sprint 03)
 // ==========================================
 
-export type ProjectRole = 
+export type ProjectRole =
   | 'OWNER_CLIENT'
   | 'SENIOR_PROJECT_DIRECTOR'
   | 'GENERAL_CONTRACTOR'
   | 'STRUCTURAL_QA_QC_AUDITOR';
 
-export type AppointmentStatus = 
+export type AppointmentStatus =
   | 'INVITED'
   | 'ACCEPTED'
   | 'DECLINED'
@@ -434,13 +438,18 @@ export interface ProjectAppointment {
 // Audit Event Domain Model (Sprint 03)
 // ==========================================
 
-export type AuditAction = 
+export type AuditAction =
   | 'ORGANIZATION_CREATED'
   | 'PROJECT_CREATED'
   | 'PROJECT_INVITATION_SENT'
   | 'PROJECT_INVITATION_ACCEPTED'
   | 'PROJECT_INVITATION_DECLINED'
-  | 'PROJECT_APPOINTMENT_REVOKED';
+  | 'PROJECT_APPOINTMENT_REVOKED'
+  | 'DIRECT_LINE_MESSAGE_SENT'
+  | 'RFI_CREATED'
+  | 'RFI_RESPONDED'
+  | 'RFI_ACKNOWLEDGED'
+  | 'RFI_CLOSED';
 
 export interface AuditEvent {
   id: string;
@@ -452,4 +461,96 @@ export interface AuditEvent {
   entityId: string;
   timestamp: string;
   metadata?: Record<string, any>;
+}
+
+// ==========================================
+// Project Operations: Direct Line (Sprint 04A)
+// ==========================================
+
+export type ChannelType =
+  | 'OWNER_DIRECTOR'
+  | 'OWNER_QAQC'
+  | 'DIRECTOR_CONTRACTOR';
+
+export interface ProjectConversation {
+  id: string;
+  projectId: string;
+  channelType: ChannelType;
+  participantRoles: [ProjectRole, ProjectRole];
+  createdAt: string;
+  updatedAt: string;
+  lastMessageSnippet?: string;
+  lastMessageAt?: string;
+}
+
+export type DirectLineMessageType =
+  | 'MESSAGE'
+  | 'INFORMATION'
+  | 'INSTRUCTION'
+  | 'CLARIFICATION_REQUEST'
+  | 'DECISION_REQUEST'
+  | 'APPROVAL_REQUEST'
+  | 'ESCALATION'
+  | 'ACKNOWLEDGEMENT';
+
+export interface ProjectMessage {
+  id: string;
+  conversationId: string;
+  projectId: string;
+  channelType: ChannelType;
+  senderUserId: string;
+  senderRole: ProjectRole;
+  senderName: string;
+  messageType: DirectLineMessageType;
+  subject?: string;
+  content: string;
+  relatedEntityId?: string;
+  createdAt: string;
+}
+
+// ==========================================
+// Project Operations: RFI Workflow (Sprint 04A)
+// ==========================================
+
+export type RFIStatus =
+  | 'OPEN'
+  | 'UNDER_REVIEW'
+  | 'ANSWERED'
+  | 'ACKNOWLEDGED'
+  | 'CLOSED';
+
+export type RFIPriority =
+  | 'LOW'
+  | 'NORMAL'
+  | 'HIGH'
+  | 'CRITICAL';
+
+export interface RFI {
+  id: string;
+  projectId: string;
+  number: string;
+  title: string;
+  question: string;
+  discipline: string;
+  raisedByUserId: string;
+  raisedByRole: ProjectRole;
+  raisedByName: string;
+  assignedToUserId: string;
+  assignedToRole: ProjectRole;
+  assignedToName: string;
+  status: RFIStatus;
+  priority: RFIPriority;
+  relatedMilestoneId?: string;
+  relatedEvidenceIds?: string[];
+  response?: string;
+  respondedByUserId?: string;
+  respondedByName?: string;
+  respondedAt?: string;
+  acknowledgedAt?: string;
+  acknowledgementNote?: string;
+  closedAt?: string;
+  closingNotes?: string;
+  createdAt: string;
+  dueAt?: string;
+  updatedAt: string;
 }

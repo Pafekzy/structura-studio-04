@@ -2,12 +2,14 @@ import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/authMiddleware';
 import { requireOrganizationOwner, requireProjectOwner } from '../middleware/governanceMiddleware';
 import { governanceService } from '../services/governanceService';
-import { 
-  createOrganizationSchema, 
-  createProjectSchema, 
-  createInvitationSchema 
+import {
+  createOrganizationSchema,
+  createProjectSchema,
+  createInvitationSchema
 } from '../validation/schemas';
 import { auditEventRepository } from '../repositories/auditEventRepository';
+import { projectRepository } from '../repositories/projectRepository';
+import { organizationRepository } from '../repositories/organizationRepository';
 
 export const governanceRouter = Router();
 
@@ -257,8 +259,8 @@ governanceRouter.get('/professionals', requireAuth, async (req: Request, res: Re
       return res.status(400).json({ error: 'Role query parameter is required' });
     }
     const results = await governanceService.discoverProfessionals(
-      role as any, 
-      search as string | undefined, 
+      role as any,
+      search as string | undefined,
       country as string | undefined
     );
     return res.json(results);
@@ -275,16 +277,72 @@ governanceRouter.get('/professionals', requireAuth, async (req: Request, res: Re
 governanceRouter.get('/audit-events', requireAuth, async (req: Request, res: Response) => {
   try {
     const { projectId, organizationId } = req.query;
+    const userId = req.user!.uid;
+
     if (projectId) {
-      const events = await auditEventRepository.listByProject(projectId as string);
+      const pId = projectId as string;
+      const project = await projectRepository.getProjectById(pId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+      }
+
+      // Check authority: project owner, active appointment, or organization owner/admin
+      const isProjectOwner = project.ownerUserId === userId;
+      let hasActiveAppointment = false;
+      const appointment = await projectRepository.getAppointmentByProjectAndUser(pId, userId);
+      if (appointment && appointment.appointmentStatus === 'ACTIVE') {
+        hasActiveAppointment = true;
+      }
+
+      let hasOrgAuthority = false;
+      if (project.organizationId) {
+        const org = await organizationRepository.getOrganizationById(project.organizationId);
+        if (org && (org.ownerUserId === userId)) {
+          hasOrgAuthority = true;
+        } else {
+          const membership = await organizationRepository.getMembership(project.organizationId, userId);
+          if (membership && membership.status === 'ACTIVE' && membership.organizationRole === 'OWNER_ADMIN') {
+            hasOrgAuthority = true;
+          }
+        }
+      }
+
+      if (!isProjectOwner && !hasActiveAppointment && !hasOrgAuthority) {
+        return res.status(403).json({
+          error: 'Forbidden: You do not have authority to access audit events for this project.',
+          code: 'INSUFFICIENT_PROJECT_AUTHORITY',
+        });
+      }
+
+      const events = await auditEventRepository.listByProject(pId);
       return res.json(events);
     }
+
     if (organizationId) {
-      const events = await auditEventRepository.listByOrganization(organizationId as string);
+      const oId = organizationId as string;
+      const org = await organizationRepository.getOrganizationById(oId);
+      if (!org) {
+        return res.status(404).json({ error: 'Organization not found', code: 'ORG_NOT_FOUND' });
+      }
+
+      const isOrgOwner = org.ownerUserId === userId;
+      const membership = await organizationRepository.getMembership(oId, userId);
+      const isMember = membership && membership.status === 'ACTIVE';
+
+      if (!isOrgOwner && !isMember) {
+        return res.status(403).json({
+          error: 'Forbidden: You do not have authority to access audit events for this organization.',
+          code: 'INSUFFICIENT_ORG_AUTHORITY',
+        });
+      }
+
+      const events = await auditEventRepository.listByOrganization(oId);
       return res.json(events);
     }
+
     return res.status(400).json({ error: 'projectId or organizationId query parameter required' });
   } catch (error: any) {
+    console.error('[governanceRoutes] Error listing audit events:', error);
     return res.status(500).json({ error: 'Failed to list audit events' });
   }
 });

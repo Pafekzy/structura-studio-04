@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  ShieldCheck, 
-  DollarSign, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Lock, 
-  Unlock, 
-  Eye, 
-  Send, 
-  MessageSquare, 
-  Sparkles, 
-  FileText, 
-  ArrowRight, 
-  Camera, 
+import {
+  Building2,
+  ShieldCheck,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+  Unlock,
+  Eye,
+  Send,
+  MessageSquare,
+  Sparkles,
+  FileText,
+  ArrowRight,
+  Camera,
   Download,
   ThumbsUp,
   ThumbsDown,
@@ -56,7 +56,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const [ownerMessage, setOwnerMessage] = useState('');
   const [messages, setMessages] = useState<Array<{ sender: string; time: string; text: string; role: string }>>([
     {
-      sender: 'Marcus Vance, AIA',
+      sender: 'Marcus Vance',
       role: 'Senior Project Director',
       time: 'Today, 09:15 AM',
       text: 'Good morning. Level 2 roof terrace waterproofing and triple-glazing delivery has arrived on site. QA/QC clearance certificate is attached for Phase 3 escrow release review.',
@@ -209,9 +209,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       </div>
 
       {/* Project Governance Team & Vacancies Matrix (Part D & E) */}
-      <ProjectGovernanceTeamView 
-        project={project} 
-        isOwnerView={true} 
+      <ProjectGovernanceTeamView
+        project={project}
+        isOwnerView={true}
       />
 
       {/* 4 Core Financial & Asset Performance Cards */}
@@ -281,10 +281,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
       {/* Main Dual Column: Left Column (Milestone Escrow Sign-Off & Decisions) vs Right Column (Surveillance & Direct Line) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column (7 cols): Milestone Escrow Authorization Matrix */}
         <div className="lg:col-span-7 space-y-6">
-          
+
           {/* Milestone Escrow Authorization Card */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
@@ -498,7 +498,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
         {/* Right Column (5 cols): Live Surveillance Stream & Direct Line to Project Director */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Live Surveillance vs Finished 3D Comparison Viewer */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
@@ -565,69 +565,82 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             </div>
           </div>
 
-          {/* Direct Line: Project Director Communications Channel */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-amber-500" />
-                <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
-                  Direct Line: Lead Project Director
-                </h3>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />
-            </div>
-
-            {/* Chat message thread */}
-            <div className="space-y-3 max-h-56 overflow-y-auto pr-1 text-xs">
-              {messages.map((msg, mIdx) => (
-                <div key={mIdx} className={`p-3 rounded-xl ${msg.sender.includes('You') ? 'bg-amber-500/10 border border-amber-500/20 ml-4' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mr-4'}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-zinc-900 dark:text-white">{msg.sender}</span>
-                    <span className="text-[10px] text-zinc-400">{msg.time}</span>
-                  </div>
-                  <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">{msg.text}</p>
+            {/* Direct Line: Project Director Communications Channel */}
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-amber-500" />
+                  <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
+                    Direct Line: Lead Project Director
+                  </h3>
                 </div>
-              ))}
+                <button
+                  onClick={() => onNavigateTab('operations')}
+                  className="text-[10px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1"
+                >
+                  <span>Full Operations Direct Line</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* Chat message thread */}
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1 text-xs">
+                {messages.map((msg, mIdx) => (
+                  <div key={mIdx} className={`p-3 rounded-xl ${msg.sender.includes('You') ? 'bg-amber-500/10 border border-amber-500/20 ml-4' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mr-4'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-zinc-900 dark:text-white">{msg.sender}</span>
+                      <span className="text-[10px] text-zinc-400">{msg.time}</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">{msg.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Message input */}
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  value={ownerMessage}
+                  onChange={(e) => setOwnerMessage(e.target.value)}
+                  placeholder="Ask your Project Director a direct question..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs focus:outline-hidden focus:ring-1 focus:ring-amber-500 text-zinc-900 dark:text-white"
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition flex items-center gap-1 shadow-sm"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </form>
             </div>
 
-            {/* Message input */}
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                type="text"
-                value={ownerMessage}
-                onChange={(e) => setOwnerMessage(e.target.value)}
-                placeholder="Ask your Project Director a direct question..."
-                className="flex-1 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs focus:outline-hidden focus:ring-1 focus:ring-amber-500 text-zinc-900 dark:text-white"
-              />
-              <button
-                type="submit"
-                className="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition flex items-center gap-1 shadow-sm"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          </div>
-
-          {/* Quick Navigation into Other Modules */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm space-y-2">
-            <span className="text-[10px] uppercase font-bold text-zinc-400 block">Owner Quick Tools</span>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                onClick={() => onNavigateTab('monitoring')}
-                className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-left transition font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-between"
-              >
-                <span>Latest SITREP</span>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
-              <button
-                onClick={() => onNavigateTab('budget')}
-                className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-left transition font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-between"
-              >
-                <span>BOQ Audit Trail</span>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
+            {/* Quick Navigation into Other Modules */}
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm space-y-2">
+              <span className="text-[10px] uppercase font-bold text-zinc-400 block">Owner Quick Tools</span>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <button
+                  onClick={() => onNavigateTab('operations')}
+                  className="p-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition font-semibold text-amber-700 dark:text-amber-400 flex items-center justify-between"
+                >
+                  <span>Operations Hub</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-500" />
+                </button>
+                <button
+                  onClick={() => onNavigateTab('monitoring')}
+                  className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-left transition font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-between"
+                >
+                  <span>Latest SITREP</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
+                <button
+                  onClick={() => onNavigateTab('budget')}
+                  className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-left transition font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-between"
+                >
+                  <span>BOQ Audit</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+                </button>
+              </div>
             </div>
-          </div>
 
         </div>
       </div>

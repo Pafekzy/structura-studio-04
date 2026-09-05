@@ -1,24 +1,25 @@
 import React, { useState } from 'react';
-import { 
-  HardHat, 
-  Users, 
-  Truck, 
-  ShieldAlert, 
-  CheckCircle2, 
-  Plus, 
-  Upload, 
-  Clock, 
-  Calendar, 
-  DollarSign, 
-  AlertTriangle, 
-  Wrench, 
-  Camera, 
+import {
+  HardHat,
+  Users,
+  Truck,
+  ShieldAlert,
+  CheckCircle2,
+  Plus,
+  Upload,
+  Clock,
+  Calendar,
+  DollarSign,
+  AlertTriangle,
+  Wrench,
+  Camera,
   ChevronRight,
   Sun,
   FileSpreadsheet,
   Layers,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Radio
 } from 'lucide-react';
 import { ConstructionProject, NavigationTab } from '../../types';
 import { PendingInvitationsBanner } from '../governance/PendingInvitationsBanner';
@@ -39,7 +40,7 @@ export const GeneralContractorDashboard: React.FC<GeneralContractorDashboardProp
   const [headcount, setHeadcount] = useState<number>(38);
   const [activeWeather, setActiveWeather] = useState<string>('Clear & Sunny (26°C)');
   const [safetyTalkDone, setSafetyTalkDone] = useState<boolean>(true);
-  
+
   // Work Orders state
   const [workOrders, setWorkOrders] = useState<Array<{ id: string; trade: string; task: string; crewSize: number; status: 'Active' | 'Completed' | 'Delayed' }>>([
     { id: 'wo-1', trade: 'Envelope & Glazing', task: 'Install Schüco AWS 75.SI+ units on Bays 6-10 (Level 2 West)', crewSize: 8, status: 'Active' },
@@ -100,6 +101,13 @@ export const GeneralContractorDashboard: React.FC<GeneralContractorDashboardProp
 
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => onNavigateTab('operations')}
+              className="px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 font-bold text-xs border border-amber-500/40 transition flex items-center gap-2 shadow-sm"
+            >
+              <Radio className="w-4 h-4 text-amber-500" />
+              <span>Direct Line & RFI Register</span>
+            </button>
+            <button
               onClick={() => onNavigateTab('inspection')}
               className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition flex items-center gap-2 shadow-sm"
             >
@@ -139,10 +147,10 @@ export const GeneralContractorDashboard: React.FC<GeneralContractorDashboardProp
 
       {/* Main Dual Columns: Left (Daily Trade Dispatch & Heavy Plant) vs Right (Progress Claim Submission & Laydown) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column (7 cols): Trade Work Orders & Heavy Equipment Logistics */}
         <div className="lg:col-span-7 space-y-6">
-          
+
           {/* Active Work Order Dispatch Board */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
@@ -234,7 +242,7 @@ export const GeneralContractorDashboard: React.FC<GeneralContractorDashboardProp
 
         {/* Right Column (5 cols): Progress Claim Submission & Material Laydown Yard */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Milestone Proof-of-Work Progress Claim Submission */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">

@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  Layers, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  FileText, 
-  ArrowRight, 
-  Sparkles, 
-  Filter, 
-  Plus, 
-  Calendar, 
-  GitBranch, 
-  DollarSign, 
-  Users, 
-  Check, 
+import {
+  Building2,
+  Layers,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  FileText,
+  ArrowRight,
+  Sparkles,
+  Filter,
+  Plus,
+  Calendar,
+  GitBranch,
+  DollarSign,
+  Users,
+  Check,
   X,
   AlertTriangle,
   ChevronRight,
@@ -97,7 +97,7 @@ export const ProjectDirectorDashboard: React.FC<ProjectDirectorDashboardProps> =
   const [selectedRfi, setSelectedRfi] = useState<RFIItem | null>(rfis[0]);
   const [rfiResponseText, setRfiResponseText] = useState('');
   const [activeTabDiscipline, setActiveTabDiscipline] = useState<string>('All');
-  
+
   // Change Order Simulator State
   const [simCostDelta, setSimCostDelta] = useState<number>(15000);
   const [simScheduleDeltaDays, setSimScheduleDeltaDays] = useState<number>(4);
@@ -116,8 +116,8 @@ export const ProjectDirectorDashboard: React.FC<ProjectDirectorDashboardProps> =
     setRfiResponseText('');
   };
 
-  const filteredRfis = activeTabDiscipline === 'All' 
-    ? rfis 
+  const filteredRfis = activeTabDiscipline === 'All'
+    ? rfis
     : rfis.filter(r => r.discipline === activeTabDiscipline);
 
   return (
@@ -185,10 +185,10 @@ export const ProjectDirectorDashboard: React.FC<ProjectDirectorDashboardProps> =
 
       {/* Main Dual Grid: Left Column (RFI Management & Change Order Modeling) vs Right Column (Critical Path & Trade Scorecards) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column (7 cols): RFI Technical Governance Hub */}
         <div className="lg:col-span-7 space-y-6">
-          
+
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
               <div>
@@ -199,6 +199,19 @@ export const ProjectDirectorDashboard: React.FC<ProjectDirectorDashboardProps> =
                 <p className="text-xs text-zinc-500">Architectural clarifications, structural clashing, and engineering responses</p>
               </div>
 
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onNavigateTab('operations')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>Open Governed Operations Hub</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-xs text-zinc-500 font-medium">Filter by engineering discipline:</span>
               {/* Discipline Filter */}
               <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px]">
                 {['All', 'Structural', 'MEP & HVAC', 'Architectural'].map((disc) => (
@@ -364,7 +377,7 @@ export const ProjectDirectorDashboard: React.FC<ProjectDirectorDashboardProps> =
 
         {/* Right Column (5 cols): Critical Path Gantt Matrix & Trade Performance Scorecards */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Critical Path Gantt Sequence */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">

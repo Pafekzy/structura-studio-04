@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { authRouter } from './server/routes/authRoutes';
 import { governanceRouter } from './server/routes/governanceRoutes';
+import { directLineRouter } from './server/routes/directLineRoutes';
+import { rfiRouter } from './server/routes/rfiRoutes';
 import { ensureDemoDataSeeded } from './server/data/demoSeed';
 
 dotenv.config();
@@ -22,6 +24,10 @@ app.use('/api/users', authRouter);
 
 // Organization Governance & Project Appointments Routes (Sprint 03)
 app.use('/api', governanceRouter);
+
+// Project Operations: Direct Line & RFI Routes (Sprint 04A)
+app.use('/api', directLineRouter);
+app.use('/api', rfiRouter);
 
 // Lazy initialization of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
@@ -65,10 +71,10 @@ function computeEngineeredEstimate(specs: {
 }) {
   const gfa = Number(specs.grossFloorArea || (specs as any).grossFloorAreaSqFt || (specs as any).grossFloorAreaSqm || 350);
   const floors = Number(specs.floors || 2);
-  
+
   // Base rates per sq.m in USD
   let baseRatePerSqm = 1450;
-  
+
   // Structural core multipliers
   const coreRates: Record<string, number> = {
     'Reinforced Concrete (RC Frame)': 1.0,
@@ -77,7 +83,7 @@ function computeEngineeredEstimate(specs: {
     'Reinforced Masonry & Precast': 0.92,
     'Hybrid Steel-Concrete Core': 1.22,
   };
-  
+
   // Foundation multipliers
   const foundationRates: Record<string, number> = {
     'Raft / Mat Slab Foundation': 180,
@@ -122,7 +128,7 @@ function computeEngineeredEstimate(specs: {
   const interiorFitout = Math.round(gfa * interiorCostPerSqm);
   const mepHvac = Math.round(gfa * mepCostPerSqm);
   const siteWorks = Math.round(Number(specs.landArea || (specs as any).plotAreaSqFt || (specs as any).plotAreaSqm || 600) * 85);
-  
+
   const directSubtotal = substructure + superstructure + enclosureGlazing + roofing + interiorFitout + mepHvac + siteWorks;
   const prelimsAndSupervision = Math.round(directSubtotal * 0.08); // 8% General Conditions
   const contractorMargin = Math.round(directSubtotal * 0.10); // 10% Overhead & Profit
@@ -168,7 +174,7 @@ app.post('/api/projects/estimate-and-propose', async (req, res) => {
   try {
     const specs = req.body;
     const computed = computeEngineeredEstimate(specs);
-    
+
     const ai = getAIClient();
     let aiInsights = {
       architecturalSummary: `A sophisticated ${specs.buildingStyle || 'Contemporary'} structure spanning ${specs.grossFloorArea || 350} m² across ${specs.floors || 2} levels, engineered with ${specs.structuralCore || 'Reinforced Concrete Frame'} and a tailored ${specs.foundationType || 'Raft Foundation'}.`,

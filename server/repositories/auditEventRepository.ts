@@ -2,13 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import { getFirebaseFirestore } from '../auth/firebaseAdmin';
 
-export type AuditAction = 
+export type AuditAction =
   | 'ORGANIZATION_CREATED'
   | 'PROJECT_CREATED'
   | 'PROJECT_INVITATION_SENT'
   | 'PROJECT_INVITATION_ACCEPTED'
   | 'PROJECT_INVITATION_DECLINED'
-  | 'PROJECT_APPOINTMENT_REVOKED';
+  | 'PROJECT_APPOINTMENT_REVOKED'
+  | 'DIRECT_LINE_MESSAGE_SENT'
+  | 'RFI_CREATED'
+  | 'RFI_RESPONDED'
+  | 'RFI_ACKNOWLEDGED'
+  | 'RFI_CLOSED';
 
 export interface AuditEvent {
   id: string;

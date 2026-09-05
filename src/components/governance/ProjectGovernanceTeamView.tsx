@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Users, 
-  ShieldCheck, 
-  ShieldAlert, 
-  Clock, 
-  UserPlus, 
-  CheckCircle2, 
-  AlertCircle, 
-  Building2, 
+import {
+  Users,
+  ShieldCheck,
+  ShieldAlert,
+  Shield,
+  Clock,
+  UserPlus,
+  CheckCircle2,
+  AlertCircle,
+  Building2,
   Trash2,
   RefreshCw,
   Award,
@@ -48,7 +49,7 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
   const [team, setTeam] = useState<GovernanceSlotData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal state for issuing invitations
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedRoleForInvite, setSelectedRoleForInvite] = useState<{ role: ProjectRole; title: string } | null>(null);
@@ -96,7 +97,7 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
             status: 'ACTIVE',
             assignedUser: {
               id: 'usr_director_demo',
-              name: 'Marcus Vance, AIA',
+              name: 'Marcus Vance',
               email: 'director@structura.build',
               verificationStatus: 'UNVERIFIED',
               discipline: 'Executive Project Director',
@@ -192,6 +193,17 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
         </button>
       </div>
 
+      {/* Provisional Organization / Owner Authority Disclosure */}
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+        <Shield className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <span className="font-bold">Provisional Organization & Fiduciary Authority Notice:</span>
+          <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+            Corporate entity verification and ultimate legal ownership remain in <strong>UNVERIFIED / PROVISIONAL</strong> status. Project fiduciary appointments are registered under development sandbox governance; they do not certify external statutory corporate authority or state engineering licensing.
+          </p>
+        </div>
+      </div>
+
       {/* 4-Role Governance Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {team.map((slot) => {
@@ -216,7 +228,7 @@ export const ProjectGovernanceTeamView: React.FC<ProjectGovernanceTeamViewProps>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Governance Seat
                   </span>
-                  
+
                   {isVacant && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                       VACANT

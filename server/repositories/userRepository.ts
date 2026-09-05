@@ -3,7 +3,7 @@ import path from 'path';
 import { getFirebaseAdmin, getFirebaseFirestore } from '../auth/firebaseAdmin';
 import { ensureDemoDataSeeded, DEMO_USERS } from '../data/demoSeed';
 
-export type PrimaryRole = 
+export type PrimaryRole =
   | 'OWNER_CLIENT'
   | 'SENIOR_PROJECT_DIRECTOR'
   | 'GENERAL_CONTRACTOR'
@@ -11,7 +11,7 @@ export type PrimaryRole =
 
 export type AccountStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
 export type IdentityStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
-export type ProfessionalVerificationStatus = 
+export type ProfessionalVerificationStatus =
   | 'NOT_REQUIRED'
   | 'NOT_STARTED'
   | 'PENDING'
@@ -33,6 +33,7 @@ export interface UserRoleDetails {
   companyName?: string;
   licenseNumber?: string;
   jurisdiction?: string;
+  claimedCredentials?: string;
   yearsOperating?: number;
   specialties?: string[];
 }

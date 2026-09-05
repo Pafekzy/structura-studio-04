@@ -20,6 +20,7 @@ import { ProjectDirectorDashboard } from './components/stakeholders/ProjectDirec
 import { GeneralContractorDashboard } from './components/stakeholders/GeneralContractorDashboard';
 import { StructuralQADashboard } from './components/stakeholders/StructuralQADashboard';
 import { AccessRestrictedView } from './components/AccessRestrictedView';
+import { ProjectOperationsWorkspace } from './components/operations/ProjectOperationsWorkspace';
 import { SAMPLE_PROJECTS } from './data/sampleProjects';
 import { ConstructionProject, NavigationTab, UserRole } from './types';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -33,6 +34,7 @@ const ROLE_PERMITTED_TABS: Record<UserRole, NavigationTab[]> = {
   'Owner / Client': [
     'stakeholder_hub',
     'stakeholder_owner',
+    'operations',
     'budget',
     'finished_render',
     'monitoring',
@@ -40,6 +42,7 @@ const ROLE_PERMITTED_TABS: Record<UserRole, NavigationTab[]> = {
   'Senior Project Director': [
     'stakeholder_hub',
     'stakeholder_director',
+    'operations',
     'cockpit',
     'monitoring',
     'inspection',
@@ -50,6 +53,7 @@ const ROLE_PERMITTED_TABS: Record<UserRole, NavigationTab[]> = {
   'General Contractor': [
     'stakeholder_hub',
     'stakeholder_contractor',
+    'operations',
     'monitoring',
     'inspection',
     'budget',
@@ -57,6 +61,7 @@ const ROLE_PERMITTED_TABS: Record<UserRole, NavigationTab[]> = {
   'Structural QA/QC Auditor': [
     'stakeholder_hub',
     'stakeholder_qaqc',
+    'operations',
     'inspection',
     'monitoring',
     'finished_render',
@@ -88,10 +93,10 @@ function AppContent() {
   const [activeProjectId, setActiveProjectId] = useState<string>(
     projects[0]?.id || SAMPLE_PROJECTS[0].id
   );
-  
+
   // Stakeholder Portal Hub is the landing page
   const [activeTab, setActiveTab] = useState<NavigationTab>('stakeholder_hub');
-  
+
   // Real authenticated user role state from AuthContext
   const { activeRole, userRole, setDeveloperActiveRole, isDeveloperDemoMode, idToken } = useAuth();
   const setActiveRole = (role: UserRole) => {
@@ -213,7 +218,7 @@ function AppContent() {
               className="flex flex-col items-center text-center p-6"
             >
               <StructuraLogo size="hero" showText={true} showSubtitle={true} showSlogan={true} variant="dark" />
-              
+
               {/* Progress Shimmer Bar */}
               <div className="w-56 sm:w-72 h-1 bg-slate-800 rounded-full mt-8 overflow-hidden relative">
                 <motion.div
@@ -327,6 +332,14 @@ function AppContent() {
                   />
                 )}
 
+                {activeTab === 'operations' && (
+                  <ProjectOperationsWorkspace
+                    project={activeProject}
+                    onNavigateTab={(tab) => setActiveTab(tab)}
+                    onOpenAdvisorModal={() => setIsAdvisorOpen(true)}
+                  />
+                )}
+
                 {/* Shared Subsystems Accessible by Authorized Stakeholders */}
                 {activeTab === 'cockpit' && (
                   <ExecutiveOverview
@@ -415,21 +428,21 @@ export default function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<AuthPage initialMode="login" />} />
             <Route path="/signup" element={<AuthPage initialMode="signup" />} />
-            <Route 
-              path="/app" 
+            <Route
+              path="/app"
               element={
                 <ProtectedRoute>
                   <AppContent />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/app/*" 
+            <Route
+              path="/app/*"
               element={
                 <ProtectedRoute>
                   <AppContent />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

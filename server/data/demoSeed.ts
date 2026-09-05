@@ -6,7 +6,7 @@ import { UserProfile } from '../repositories/userRepository';
 
 /**
  * STRUCTURA CANONICAL DEVELOPMENT & DEMO DATASET
- * 
+ *
  * Truthful boundary representation:
  * - Visibly identified as demonstration / sandbox data (isDemo: true).
  * - No simulated or fabricated verifications: all professional credentials
@@ -59,7 +59,7 @@ export const DEMO_USERS: UserProfile[] = [
     authUserId: 'usr_demo_director',
     email: 'director@structura.build',
     firstName: 'Marcus',
-    lastName: 'Vance, AIA',
+    lastName: 'Vance',
     phone: '+1 (555) 019-4820',
     primaryRole: 'SENIOR_PROJECT_DIRECTOR',
     accountStatus: 'ACTIVE',
@@ -69,8 +69,9 @@ export const DEMO_USERS: UserProfile[] = [
     roleDetails: {
       companyName: 'Vance Project Management Group',
       yearsExperience: 24,
-      primaryDiscipline: 'Executive Project Director & Civil PE',
-      licenseNumber: 'AIA-CA-98210 (Demo Sandbox)',
+      primaryDiscipline: 'Executive Project Management',
+      claimedCredentials: 'AIA, Civil PE (Unverified)',
+      licenseNumber: 'AIA-CA-98210 (Self-Declared)',
       jurisdiction: 'California',
       professionalBody: 'American Institute of Architects (AIA)',
     },
@@ -83,7 +84,7 @@ export const DEMO_USERS: UserProfile[] = [
     authUserId: 'usr_demo_contractor',
     email: 'contractor@structura.build',
     firstName: 'Elena',
-    lastName: 'Rostova, PE',
+    lastName: 'Rostova',
     phone: '+1 (555) 019-7712',
     primaryRole: 'GENERAL_CONTRACTOR',
     accountStatus: 'ACTIVE',
@@ -94,7 +95,8 @@ export const DEMO_USERS: UserProfile[] = [
       companyName: 'Aegis EPC Infrastructure Ltd.',
       yearsExperience: 20,
       primaryDiscipline: 'General Contracting & Site Operations',
-      licenseNumber: 'GC-NV-441209 (Demo Sandbox)',
+      claimedCredentials: 'PE (Unverified)',
+      licenseNumber: 'GC-NV-441209 (Self-Declared)',
       jurisdiction: 'Nevada & California',
       professionalBody: 'Associated General Contractors of America (AGC)',
     },
@@ -107,7 +109,7 @@ export const DEMO_USERS: UserProfile[] = [
     authUserId: 'usr_demo_qaqc',
     email: 'auditor@structura.build',
     firstName: 'Dr. David',
-    lastName: 'Chen, SE',
+    lastName: 'Chen',
     phone: '+1 (555) 019-3394',
     primaryRole: 'STRUCTURAL_QA_QC_AUDITOR',
     accountStatus: 'ACTIVE',
@@ -118,7 +120,8 @@ export const DEMO_USERS: UserProfile[] = [
       companyName: 'Chen Structural Forensics & Audit PLLC',
       yearsExperience: 22,
       primaryDiscipline: 'Structural Engineering & Code Compliance',
-      licenseNumber: 'SE-CA-55102 (Demo Sandbox)',
+      claimedCredentials: 'SE (Unverified)',
+      licenseNumber: 'SE-CA-55102 (Self-Declared)',
       jurisdiction: 'California',
       professionalBody: 'Structural Engineers Association of California (SEAOC)',
     },
@@ -228,9 +231,9 @@ export const DEMO_APPOINTMENTS: ProjectAppointment[] = [
     organizationId: 'org-demo-vanguard',
     userId: 'usr_demo_director',
     userEmail: 'director@structura.build',
-    userName: 'Marcus Vance, AIA',
+    userName: 'Marcus Vance',
     role: 'SENIOR_PROJECT_DIRECTOR',
-    discipline: 'Executive Project Director & Civil PE',
+    discipline: 'Executive Project Director (Civil Discipline)',
     appointmentStatus: 'ACTIVE',
     invitedByUserId: 'usr_demo_owner',
     invitedAt: '2026-01-16T09:00:00.000Z',
@@ -243,7 +246,7 @@ export const DEMO_APPOINTMENTS: ProjectAppointment[] = [
     organizationId: 'org-demo-vanguard',
     userId: 'usr_demo_contractor',
     userEmail: 'contractor@structura.build',
-    userName: 'Elena Rostova, PE',
+    userName: 'Elena Rostova',
     role: 'GENERAL_CONTRACTOR',
     discipline: 'General Contracting & Site Operations',
     appointmentStatus: 'ACTIVE',
@@ -258,7 +261,7 @@ export const DEMO_APPOINTMENTS: ProjectAppointment[] = [
     organizationId: 'org-demo-vanguard',
     userId: 'usr_demo_qaqc',
     userEmail: 'auditor@structura.build',
-    userName: 'Dr. David Chen, SE',
+    userName: 'Dr. David Chen',
     role: 'STRUCTURAL_QA_QC_AUDITOR',
     discipline: 'Structural Engineering & Code Compliance',
     appointmentStatus: 'ACTIVE',
@@ -327,8 +330,12 @@ export function ensureDemoDataSeeded(): void {
   }
   let usersModified = false;
   for (const du of DEMO_USERS) {
-    if (!users.some(u => u.authUserId === du.authUserId || u.email === du.email)) {
+    const existingIdx = users.findIndex(u => u.authUserId === du.authUserId || u.email === du.email);
+    if (existingIdx === -1) {
       users.push(du);
+      usersModified = true;
+    } else if (users[existingIdx].isDemo) {
+      users[existingIdx] = { ...users[existingIdx], ...du };
       usersModified = true;
     }
   }
@@ -369,8 +376,12 @@ export function ensureDemoDataSeeded(): void {
   }
   let apptsModified = false;
   for (const da of DEMO_APPOINTMENTS) {
-    if (!appts.some(a => a.id === da.id)) {
+    const existingIdx = appts.findIndex(a => a.id === da.id);
+    if (existingIdx === -1) {
       appts.push(da);
+      apptsModified = true;
+    } else if (appts[existingIdx].isDemo) {
+      appts[existingIdx] = { ...appts[existingIdx], ...da };
       apptsModified = true;
     }
   }

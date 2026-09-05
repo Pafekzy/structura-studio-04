@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  ShieldCheck, 
-  Sparkles, 
-  FileText, 
+import {
+  Building2,
+  ShieldCheck,
+  Sparkles,
+  FileText,
   ChevronDown,
   TrendingUp,
   HardHat,
@@ -24,7 +24,8 @@ import {
   KeyRound,
   Globe,
   User,
-  Sliders
+  Sliders,
+  Radio
 } from 'lucide-react';
 import { ConstructionProject, NavigationTab, UserRole } from '../types';
 import { StructuraLogo } from './StructuraLogo';
@@ -72,13 +73,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const { 
-    user, 
-    userProfile, 
-    userRole, 
-    logout, 
-    isDeveloperDemoMode, 
-    toggleDeveloperDemoMode 
+  const {
+    user,
+    userProfile,
+    userRole,
+    logout,
+    isDeveloperDemoMode,
+    toggleDeveloperDemoMode
   } = useAuth();
 
   const projectDropdownRef = useRef<HTMLDivElement>(null);
@@ -95,9 +96,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   // Resolve current active project safely
-  const activeProject = 
-    propActiveProject || 
-    projects.find((p) => p.id === activeProjectId) || 
+  const activeProject =
+    propActiveProject ||
+    projects.find((p) => p.id === activeProjectId) ||
     projects[0] || {
       id: 'default-proj',
       name: 'Active Construction Project',
@@ -130,6 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'Owner / Client':
         return [
           { id: 'stakeholder_owner', label: 'Owner Command Desk', shortLabel: 'Owner Desk', icon: <Shield className="w-3.5 h-3.5 shrink-0 text-amber-500" /> },
+          { id: 'operations', label: 'Direct Line & Operations', shortLabel: 'Operations', icon: <Radio className="w-3.5 h-3.5 shrink-0 text-amber-500" /> },
           { id: 'budget', label: 'BOQ & Escrow Payouts', shortLabel: 'Escrow & BOQ', icon: <TrendingUp className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'finished_render', label: '360° Turnkey 3D Model', shortLabel: '3D Model', icon: <RotateCw className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'monitoring', label: 'Executive SITREPs', shortLabel: 'SITREPs', icon: <FileText className="w-3.5 h-3.5 shrink-0" /> },
@@ -138,6 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'Senior Project Director':
         return [
           { id: 'stakeholder_director', label: 'Director Command Center', shortLabel: 'Director Hub', icon: <GitBranch className="w-3.5 h-3.5 shrink-0 text-blue-500" /> },
+          { id: 'operations', label: 'Operations & RFIs', shortLabel: 'Operations', icon: <Radio className="w-3.5 h-3.5 shrink-0 text-blue-500" /> },
           { id: 'cockpit', label: 'Executive Cockpit', shortLabel: 'Cockpit', icon: <Activity className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'monitoring', label: 'Periodic Logs & RFIs', shortLabel: 'Logs & RFIs', icon: <FileText className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'inspection', label: 'AI Visual Site Audits', shortLabel: 'AI Audits', icon: <Camera className="w-3.5 h-3.5 shrink-0" /> },
@@ -149,6 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'General Contractor':
         return [
           { id: 'stakeholder_contractor', label: 'General Contractor Station', shortLabel: 'GC Station', icon: <HardHat className="w-3.5 h-3.5 shrink-0 text-amber-500" /> },
+          { id: 'operations', label: 'Direct Line & RFI Register', shortLabel: 'Operations', icon: <Radio className="w-3.5 h-3.5 shrink-0 text-amber-500" /> },
           { id: 'monitoring', label: 'Daily Shift Logs & SITREPs', shortLabel: 'Shift Logs', icon: <FileText className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'inspection', label: 'Field Photo Audits', shortLabel: 'Field Audits', icon: <Camera className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'budget', label: 'Trade Progress Claims', shortLabel: 'Trade Claims', icon: <TrendingUp className="w-3.5 h-3.5 shrink-0" /> },
@@ -157,6 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       case 'Structural QA/QC Auditor':
         return [
           { id: 'stakeholder_qaqc', label: 'QA/QC Auditor Station', shortLabel: 'QA/QC Station', icon: <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> },
+          { id: 'operations', label: 'Direct Line & Audits', shortLabel: 'Direct Line', icon: <Radio className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> },
           { id: 'inspection', label: 'AI Defect Scanner', shortLabel: 'Defect AI', icon: <Camera className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'monitoring', label: 'NCRs & Material Logs', shortLabel: 'NCR Logs', icon: <FileText className="w-3.5 h-3.5 shrink-0" /> },
           { id: 'finished_render', label: '3D Laser Plumbness', shortLabel: '3D Scans', icon: <RotateCw className="w-3.5 h-3.5 shrink-0" /> },
@@ -199,11 +204,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
-          
+
           {/* Structura Brand & Project / Gateway Identifier */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Structura Logo */}
-            <div 
+            <div
               onClick={handleExitPortal}
               className="cursor-pointer group flex items-center transition-transform hover:opacity-95"
               title="Return to Stakeholder Gateway Landing Page"

@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertTriangle, 
-  XCircle, 
-  FileCheck, 
-  Camera, 
-  Activity, 
-  Plus, 
-  Award, 
-  FileText, 
-  ArrowRight, 
-  Sparkles, 
-  Check, 
+import {
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  FileCheck,
+  Camera,
+  Activity,
+  Plus,
+  Award,
+  FileText,
+  ArrowRight,
+  Sparkles,
+  Check,
   Crosshair,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Radio
 } from 'lucide-react';
 import { ConstructionProject, NavigationTab } from '../../types';
 import { PendingInvitationsBanner } from '../governance/PendingInvitationsBanner';
@@ -56,7 +57,7 @@ export const StructuralQADashboard: React.FC<StructuralQADashboardProps> = ({
       description: 'Minor wrinkle in synthetic FPO membrane overlap at corner upstand. Needs heat-welded patch and vacuum bell test.',
       status: 'Passed Re-Inspection',
       remedialAction: 'Contractor heat-welded 150mm patch and performed soap-solution vacuum bubble test. Result: 0 leaks at -50 kPa.',
-      inspectedBy: 'Dr. Henrik Lindqvist, PE',
+      inspectedBy: 'Dr. Henrik Lindqvist',
       timestamp: '2026-08-25 14:20',
     },
     {
@@ -118,6 +119,13 @@ export const StructuralQADashboard: React.FC<StructuralQADashboardProps> = ({
 
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => onNavigateTab('operations')}
+              className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-800 dark:text-emerald-300 font-bold text-xs border border-emerald-500/40 transition flex items-center gap-2 shadow-sm"
+            >
+              <Radio className="w-4 h-4 text-emerald-500" />
+              <span>Owner Direct Line & Audits</span>
+            </button>
+            <button
               onClick={() => onNavigateTab('inspection')}
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-2 shadow-sm"
             >
@@ -157,10 +165,10 @@ export const StructuralQADashboard: React.FC<StructuralQADashboardProps> = ({
 
       {/* Main Dual Column: Left (Laboratory Compression & Laser Tolerance) vs Right (NCR Punch List & Compliance Certification) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column (7 cols): Laboratory Concrete Breaks & Laser Plumbness Matrix */}
         <div className="lg:col-span-7 space-y-6">
-          
+
           {/* Material Testing Lab Database */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
@@ -254,7 +262,7 @@ export const StructuralQADashboard: React.FC<StructuralQADashboardProps> = ({
 
         {/* Right Column (5 cols): NCR Defect Punch-List & Statutory Certificate */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Non-Conformance Report (NCR) Defect Tickets */}
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">

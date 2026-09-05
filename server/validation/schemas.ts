@@ -63,3 +63,47 @@ export const createInvitationSchema = z.object({
   ]),
   reason: z.string().max(500).optional(),
 });
+
+// Part E: Direct Line Message Schema (Sprint 04A)
+export const createDirectLineMessageSchema = z.object({
+  content: z.string().min(1, 'Message content cannot be empty').max(5000),
+  messageType: z.enum([
+    'MESSAGE',
+    'INFORMATION',
+    'INSTRUCTION',
+    'CLARIFICATION_REQUEST',
+    'DECISION_REQUEST',
+    'APPROVAL_REQUEST',
+    'ESCALATION',
+    'ACKNOWLEDGEMENT',
+  ]).default('MESSAGE'),
+  subject: z.string().max(200).optional(),
+  relatedEntityId: z.string().max(100).optional(),
+});
+
+// Part F: RFI Creation Schema (Sprint 04A)
+export const createRFISchema = z.object({
+  title: z.string().min(3, 'RFI title must be at least 3 characters').max(200),
+  question: z.string().min(10, 'RFI question must be at least 10 characters').max(5000),
+  discipline: z.string().max(100).optional().default('General Operations'),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']).default('NORMAL'),
+  assignedToUserId: z.string().optional(),
+  relatedMilestoneId: z.string().optional(),
+  relatedEvidenceIds: z.array(z.string()).optional(),
+  dueAt: z.string().optional(),
+});
+
+// Part G: RFI Response Schema
+export const respondRFISchema = z.object({
+  response: z.string().min(5, 'Response must be at least 5 characters').max(5000),
+});
+
+// Part H: RFI Acknowledgement Schema
+export const acknowledgeRFISchema = z.object({
+  acknowledgementNote: z.string().max(1000).optional(),
+});
+
+// Part I: RFI Closure Schema
+export const closeRFISchema = z.object({
+  closingNotes: z.string().max(1000).optional(),
+});
