@@ -1,7 +1,33 @@
 /**
- * SPRINT 04B VERIFICATION TEST SUITE
- * Tests all 19 defined test scenarios against server-side services, repositories,
- * governance rules, and authorization boundaries.
+ * SPRINT 04B COMPLETE 24-SCENARIO ACCEPTANCE VERIFICATION SUITE
+ *
+ * Verifies all 24 required Sprint 04B scenarios against server-side services,
+ * repositories, governance boundaries, and authorization rules:
+ *
+ * 1. General Contractor can view authorized project milestones.
+ * 2. Unauthorized external user receives HTTP 403 for milestone access.
+ * 3. General Contractor can create/save a DRAFT submission.
+ * 4. General Contractor can associate evidence.
+ * 5. Evidence itself persists after repository reload/read.
+ * 6. General Contractor can formally submit a milestone package.
+ * 7. Submitted package persists after repository reload/read.
+ * 8. Senior Project Director can see the submitted package.
+ * 9. Senior Project Director can inspect associated evidence.
+ * 10. Senior Project Director can explicitly BEGIN technical review.
+ * 11. Senior Project Director can REQUEST_CHANGES.
+ * 12. Contractor can see returned/requested changes.
+ * 13. Contractor can revise and resubmit where workflow permits.
+ * 14. Senior Project Director can ACCEPT_TECHNICAL_SUBMISSION.
+ * 15. General Contractor cannot technically accept their own submission.
+ * 16. General Contractor cannot directly set the milestone to APPROVED.
+ * 17. Unauthorized external user cannot create or mutate project evidence.
+ * 18. Unauthorized external user cannot submit or technically review milestone packages.
+ * 19. Invalid workflow state transitions are rejected server-side.
+ * 20. Audit events persist for governed transitions.
+ * 21. Technical acceptance is NOT represented as QA/QC approval.
+ * 22. Technical acceptance is NOT represented as Owner approval.
+ * 23. Technical acceptance is NOT represented as PAYMENT AUTHORIZATION.
+ * 24. No milestone/submission state is falsely represented as: PAID, SETTLED, FUNDS_RELEASED.
  */
 
 import fs from 'fs';
@@ -12,7 +38,6 @@ import { evidenceRepository } from './server/repositories/evidenceRepository';
 import { submissionRepository, INITIAL_DEMO_SUBMISSIONS } from './server/repositories/submissionRepository';
 import { technicalReviewRepository } from './server/repositories/technicalReviewRepository';
 import { auditEventRepository } from './server/repositories/auditEventRepository';
-import { projectRepository } from './server/repositories/projectRepository';
 
 const milestoneService = new MilestoneService();
 
@@ -20,22 +45,21 @@ const PROJECT_ID = 'proj-horizon-villa';
 const CONTRACTOR_UID = 'usr_demo_contractor';
 const DIRECTOR_UID = 'usr_demo_director';
 const OWNER_UID = 'usr_demo_owner';
-const QAQC_UID = 'usr_demo_qaqc';
 const UNAUTHORIZED_UID = 'usr_unauthorized_attacker';
 
-interface TestResult {
+export interface TestResult {
   scenarioNumber: number;
   description: string;
-  passed: boolean;
+  status: 'PASS' | 'FAIL' | 'NOT TESTED';
   notes?: string;
 }
 
 const results: TestResult[] = [];
 
 async function runTests() {
-  console.log('=== STARTING SPRINT 04B GOVERNANCE & OPERATIONS TEST SUITE ===\n');
+  console.log('=== STARTING STRUCTURA SPRINT 04B 24-SCENARIO ACCEPTANCE TEST SUITE ===\n');
 
-  // Reset sandbox test data for reproducibility
+  // Reset sandbox test data for clean reproducibility
   const dataDir = path.join(process.cwd(), 'data');
   if (fs.existsSync(dataDir)) {
     fs.writeFileSync(path.join(dataDir, 'milestones.json'), JSON.stringify(INITIAL_DEMO_MILESTONES, null, 2), 'utf-8');
@@ -43,91 +67,93 @@ async function runTests() {
     fs.writeFileSync(path.join(dataDir, 'technical_reviews.json'), JSON.stringify([], null, 2), 'utf-8');
   }
 
-  // Ensure milestones and evidence are initialized
+  // Ensure initial milestones exist
   const initialMilestones = await milestoneService.listMilestones(PROJECT_ID, DIRECTOR_UID);
   console.log(`[SETUP] Found ${initialMilestones.length} milestones for ${PROJECT_ID}`);
 
-  // 1. Authorized project roles can view project milestones
+  // --------------------------------------------------------------------------
+  // Scenario 1: General Contractor can view authorized project milestones.
+  // --------------------------------------------------------------------------
   try {
     const contractorView = await milestoneService.listMilestones(PROJECT_ID, CONTRACTOR_UID);
-    const directorView = await milestoneService.listMilestones(PROJECT_ID, DIRECTOR_UID);
-    const ownerView = await milestoneService.listMilestones(PROJECT_ID, OWNER_UID);
-    const passed =
-      contractorView.length > 0 && directorView.length > 0 && ownerView.length > 0;
+    const passed = contractorView && contractorView.length > 0;
     results.push({
       scenarioNumber: 1,
-      description: 'Authorized project roles can view project milestones',
-      passed,
-      notes: `Milestones retrieved: Contractor (${contractorView.length}), Director (${directorView.length}), Owner (${ownerView.length})`,
+      description: 'General Contractor can view authorized project milestones.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Contractor retrieved ${contractorView.length} authorized milestones for ${PROJECT_ID}.`,
     });
   } catch (err: any) {
     results.push({
       scenarioNumber: 1,
-      description: 'Authorized project roles can view project milestones',
-      passed: false,
+      description: 'General Contractor can view authorized project milestones.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 2. Unauthorized external user receives 403 for project milestone access
+  // --------------------------------------------------------------------------
+  // Scenario 2: Unauthorized external user receives HTTP 403 for milestone access.
+  // --------------------------------------------------------------------------
   try {
     let failedAsExpected = false;
     try {
       await milestoneService.listMilestones(PROJECT_ID, UNAUTHORIZED_UID);
     } catch (err: any) {
-      if (err.statusCode === 403 || err.code === 'INSUFFICIENT_PROJECT_AUTHORITY') {
+      if (err.statusCode === 403 && (err.code === 'INSUFFICIENT_PROJECT_AUTHORITY' || err.error?.includes('Forbidden'))) {
         failedAsExpected = true;
       }
     }
     results.push({
       scenarioNumber: 2,
-      description: 'Unauthorized external user receives 403 for project milestone access',
-      passed: failedAsExpected,
-      notes: failedAsExpected ? 'Unauthorized access rejected with 403' : 'Failed to reject unauthorized user',
+      description: 'Unauthorized external user receives HTTP 403 for milestone access.',
+      status: failedAsExpected ? 'PASS' : 'FAIL',
+      notes: failedAsExpected
+        ? 'External unappointed user strictly rejected with HTTP 403 INSUFFICIENT_PROJECT_AUTHORITY.'
+        : 'Failed to block unauthorized user.',
     });
   } catch (err: any) {
     results.push({
       scenarioNumber: 2,
-      description: 'Unauthorized external user receives 403 for project milestone access',
-      passed: false,
+      description: 'Unauthorized external user receives HTTP 403 for milestone access.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // Pick target milestone for submission tests
+  // Select target milestone
   const targetMilestone = initialMilestones[0];
-  console.log(`[TEST TARGET] Using Milestone #${targetMilestone.sequence}: ${targetMilestone.title} (ID: ${targetMilestone.id})`);
+  console.log(`[TARGET MILESTONE] #${targetMilestone.sequence}: ${targetMilestone.title} (${targetMilestone.id})`);
 
-  // Ensure milestone is IN_PROGRESS
-  if (targetMilestone.status === 'NOT_STARTED') {
-    await milestoneService.startMilestone(PROJECT_ID, targetMilestone.id, CONTRACTOR_UID);
+  // Ensure a NOT_STARTED milestone is started to test milestone commencement & audit trail
+  const notStartedMilestone = initialMilestones.find(m => m.status === 'NOT_STARTED');
+  if (notStartedMilestone) {
+    await milestoneService.startMilestone(PROJECT_ID, notStartedMilestone.id, CONTRACTOR_UID);
   }
 
-  // Register an evidence item for the contractor
-  const createdEvidence = await milestoneService.createEvidence(
-    PROJECT_ID,
-    CONTRACTOR_UID,
-    {
-      title: 'Lab Test 28-Day Concrete Compressive Strength',
-      description: 'Certified 48.2 MPa cylinder crush test verifying high-strength mix specification ASTM C39.',
-      evidenceType: 'TEST_RESULT',
-      milestoneId: targetMilestone.id,
-      fileName: 'concrete_compression_break_cert.pdf',
-      mimeType: 'application/pdf',
-      fileSize: 2048576,
-      storageProvider: 'METADATA_ONLY',
-      storageStatus: 'RECORDED_METADATA',
-      storageReference: 'LAB-CERT-2026-TEST-48MPA',
-      metadata: {
-        testingLab: 'Pacific GeoStructural Testing Laboratories Inc.',
-        breakStrengthMPa: 48.2,
-        specRequiredMPa: 40.0,
-        result: 'PASSED',
-      },
-    }
-  );
+  // Create evidence record
+  const createdEvidence = await milestoneService.createEvidence(PROJECT_ID, CONTRACTOR_UID, {
+    title: 'Lab Test 28-Day Concrete Compressive Strength',
+    description: 'Certified 48.2 MPa cylinder crush test verifying high-strength mix specification ASTM C39.',
+    evidenceType: 'TEST_RESULT',
+    milestoneId: targetMilestone.id,
+    fileName: 'concrete_compression_break_cert.pdf',
+    mimeType: 'application/pdf',
+    fileSize: 2048576,
+    storageProvider: 'METADATA_ONLY',
+    storageStatus: 'RECORDED_METADATA',
+    storageReference: 'LAB-CERT-2026-TEST-48MPA',
+    metadata: {
+      testingLab: 'Pacific GeoStructural Testing Laboratories Inc.',
+      breakStrengthMPa: 48.2,
+      specRequiredMPa: 40.0,
+      result: 'PASSED',
+    },
+  });
 
-  // 3. General Contractor can create/save a permitted draft submission
+  // --------------------------------------------------------------------------
+  // Scenario 3: General Contractor can create/save a DRAFT submission.
+  // --------------------------------------------------------------------------
   let draftSubmission: any;
   try {
     draftSubmission = await milestoneService.createOrUpdateSubmissionDraft(
@@ -141,43 +167,69 @@ async function runTests() {
         evidenceIds: [createdEvidence.id],
       }
     );
-    const passed = draftSubmission.status === 'DRAFT' && draftSubmission.milestoneId === targetMilestone.id;
+    const passed = draftSubmission && draftSubmission.status === 'DRAFT' && draftSubmission.milestoneId === targetMilestone.id;
     results.push({
       scenarioNumber: 3,
-      description: 'General Contractor can create/save a permitted draft submission',
-      passed,
-      notes: `Draft created with ID: ${draftSubmission.id}, Status: ${draftSubmission.status}`,
+      description: 'General Contractor can create/save a DRAFT submission.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Draft saved with ID ${draftSubmission?.id}, status DRAFT, revision ${draftSubmission?.revisionNumber}.`,
     });
   } catch (err: any) {
     results.push({
       scenarioNumber: 3,
-      description: 'General Contractor can create/save a permitted draft submission',
-      passed: false,
+      description: 'General Contractor can create/save a DRAFT submission.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 4. General Contractor can associate project evidence with the submission
+  // --------------------------------------------------------------------------
+  // Scenario 4: General Contractor can associate evidence.
+  // --------------------------------------------------------------------------
   try {
-    const passed =
-      draftSubmission &&
-      draftSubmission.evidenceIds.includes(createdEvidence.id);
+    const passed = draftSubmission && draftSubmission.evidenceIds && draftSubmission.evidenceIds.includes(createdEvidence.id);
     results.push({
       scenarioNumber: 4,
-      description: 'General Contractor can associate project evidence with the submission',
-      passed: !!passed,
-      notes: `Associated evidence ID: ${createdEvidence.id}`,
+      description: 'General Contractor can associate evidence.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Evidence ID ${createdEvidence.id} successfully attached to draft submission package.`,
     });
   } catch (err: any) {
     results.push({
       scenarioNumber: 4,
-      description: 'General Contractor can associate project evidence with the submission',
-      passed: false,
+      description: 'General Contractor can associate evidence.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 5. General Contractor can submit the package for review
+  // --------------------------------------------------------------------------
+  // Scenario 5: Evidence itself persists after repository reload/read.
+  // --------------------------------------------------------------------------
+  try {
+    const reloadedEvidence = await evidenceRepository.getEvidenceById(createdEvidence.id);
+    const passed =
+      reloadedEvidence !== null &&
+      reloadedEvidence.id === createdEvidence.id &&
+      reloadedEvidence.storageReference === 'LAB-CERT-2026-TEST-48MPA';
+    results.push({
+      scenarioNumber: 5,
+      description: 'Evidence itself persists after repository reload/read.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Reloaded evidence record ${reloadedEvidence?.id} with reference "${reloadedEvidence?.storageReference}".`,
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 5,
+      description: 'Evidence itself persists after repository reload/read.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 6: General Contractor can formally submit a milestone package.
+  // --------------------------------------------------------------------------
   let submittedPackage: any;
   try {
     submittedPackage = await milestoneService.submitPackage(
@@ -186,64 +238,68 @@ async function runTests() {
       CONTRACTOR_UID,
       'Package complete with verified cylinder break test attached.'
     );
-    const passed =
-      submittedPackage.status === 'SUBMITTED' &&
-      submittedPackage.submittedAt !== null;
+    const passed = submittedPackage && submittedPackage.status === 'SUBMITTED' && !!submittedPackage.submittedAt;
     results.push({
-      scenarioNumber: 5,
-      description: 'General Contractor can submit the package for review',
-      passed,
-      notes: `Package status: ${submittedPackage.status}`,
+      scenarioNumber: 6,
+      description: 'General Contractor can formally submit a milestone package.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Milestone package submitted successfully at ${submittedPackage?.submittedAt}.`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 5,
-      description: 'General Contractor can submit the package for review',
-      passed: false,
+      scenarioNumber: 6,
+      description: 'General Contractor can formally submit a milestone package.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 6. Submission persists after reload/repository read
+  // --------------------------------------------------------------------------
+  // Scenario 7: Submitted package persists after repository reload/read.
+  // --------------------------------------------------------------------------
   try {
-    const reloaded = await submissionRepository.getSubmissionById(submittedPackage.id);
-    const passed = reloaded !== null && reloaded.status === 'SUBMITTED';
+    const reloadedSub = await submissionRepository.getSubmissionById(submittedPackage.id);
+    const passed = reloadedSub !== null && reloadedSub.status === 'SUBMITTED' && reloadedSub.id === submittedPackage.id;
     results.push({
-      scenarioNumber: 6,
-      description: 'Submission persists after reload/repository read',
-      passed,
-      notes: `Reloaded submission ID: ${reloaded?.id}, status: ${reloaded?.status}`,
+      scenarioNumber: 7,
+      description: 'Submitted package persists after repository reload/read.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Persisted submission verified in repository with status ${reloadedSub?.status}.`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 6,
-      description: 'Submission persists after reload/repository read',
-      passed: false,
+      scenarioNumber: 7,
+      description: 'Submitted package persists after repository reload/read.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 7. Senior Project Director can see submitted package
+  // --------------------------------------------------------------------------
+  // Scenario 8: Senior Project Director can see the submitted package.
+  // --------------------------------------------------------------------------
   try {
     const directorSubmissions = await milestoneService.listSubmissions(PROJECT_ID, DIRECTOR_UID);
     const found = directorSubmissions.find((s: any) => s.id === submittedPackage.id);
     const passed = found !== undefined && found.status === 'SUBMITTED';
     results.push({
-      scenarioNumber: 7,
-      description: 'Senior Project Director can see submitted package',
-      passed,
-      notes: `Director retrieved submitted package: ${found?.title}`,
+      scenarioNumber: 8,
+      description: 'Senior Project Director can see the submitted package.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Director retrieved submitted package "${found?.title}" for technical review.`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 7,
-      description: 'Senior Project Director can see submitted package',
-      passed: false,
+      scenarioNumber: 8,
+      description: 'Senior Project Director can see the submitted package.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 8. Senior Project Director can inspect associated evidence
+  // --------------------------------------------------------------------------
+  // Scenario 9: Senior Project Director can inspect associated evidence.
+  // --------------------------------------------------------------------------
   try {
     const evidenceList = await milestoneService.listEvidence(PROJECT_ID, DIRECTOR_UID);
     const matchingEvidence = evidenceList.find((e: any) => e.id === createdEvidence.id);
@@ -251,27 +307,52 @@ async function runTests() {
       matchingEvidence !== undefined &&
       matchingEvidence.storageReference === 'LAB-CERT-2026-TEST-48MPA';
     results.push({
-      scenarioNumber: 8,
-      description: 'Senior Project Director can inspect associated evidence',
-      passed,
-      notes: `Director inspected evidence: ${matchingEvidence?.title} (Ref: ${matchingEvidence?.storageReference})`,
+      scenarioNumber: 9,
+      description: 'Senior Project Director can inspect associated evidence.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Director inspected evidence: "${matchingEvidence?.title}" (Lab ref: ${matchingEvidence?.storageReference}).`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 8,
-      description: 'Senior Project Director can inspect associated evidence',
-      passed: false,
+      scenarioNumber: 9,
+      description: 'Senior Project Director can inspect associated evidence.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 9. Senior Project Director can request changes
+  // --------------------------------------------------------------------------
+  // Scenario 10: Senior Project Director can explicitly BEGIN technical review.
+  // --------------------------------------------------------------------------
+  let underReviewPackage: any;
+  try {
+    underReviewPackage = await milestoneService.startTechnicalReview(PROJECT_ID, submittedPackage.id, DIRECTOR_UID);
+    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
+    const passed =
+      underReviewPackage &&
+      underReviewPackage.status === 'UNDER_REVIEW' &&
+      m?.status === 'TECHNICAL_REVIEW' &&
+      m?.technicalReviewStatus === 'IN_REVIEW';
+    results.push({
+      scenarioNumber: 10,
+      description: 'Senior Project Director can explicitly BEGIN technical review.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Technical review formally initiated. Submission is UNDER_REVIEW, milestone is TECHNICAL_REVIEW.`,
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 10,
+      description: 'Senior Project Director can explicitly BEGIN technical review.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 11: Senior Project Director can REQUEST_CHANGES.
+  // --------------------------------------------------------------------------
   let returnedSubmission: any;
   try {
-    // Start review first
-    await milestoneService.startTechnicalReview(PROJECT_ID, submittedPackage.id, DIRECTOR_UID);
-    
-    // Director requests changes
     const reviewResult = await milestoneService.decideTechnicalReview(
       PROJECT_ID,
       submittedPackage.id,
@@ -287,44 +368,48 @@ async function runTests() {
       returnedSubmission?.status === 'RETURNED' &&
       returnedSubmission?.returnNotes?.includes('thermographic sensor logs');
     results.push({
-      scenarioNumber: 9,
-      description: 'Senior Project Director can request changes',
-      passed: !!passed,
-      notes: `Review decision: ${reviewResult.review.decision}, Submission status: ${returnedSubmission?.status}`,
+      scenarioNumber: 11,
+      description: 'Senior Project Director can REQUEST_CHANGES.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Decision REQUEST_CHANGES applied. Package status returned to contractor with feedback.`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 9,
-      description: 'Senior Project Director can request changes',
-      passed: false,
+      scenarioNumber: 11,
+      description: 'Senior Project Director can REQUEST_CHANGES.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 10. Contractor can see returned/requested changes
+  // --------------------------------------------------------------------------
+  // Scenario 12: Contractor can see returned/requested changes.
+  // --------------------------------------------------------------------------
   try {
     const contractorSubmissions = await milestoneService.listSubmissions(PROJECT_ID, CONTRACTOR_UID);
     const returned = contractorSubmissions.find((s: any) => s.id === submittedPackage.id);
     const passed =
       returned !== undefined &&
       returned.status === 'RETURNED' &&
-      (returned.returnNotes || '').length > 0;
+      (returned.returnNotes || '').includes('thermographic sensor logs');
     results.push({
-      scenarioNumber: 10,
-      description: 'Contractor can see returned/requested changes',
-      passed,
-      notes: `Contractor saw returned package with feedback: "${returned?.returnNotes}"`,
+      scenarioNumber: 12,
+      description: 'Contractor can see returned/requested changes.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Contractor inspected returned package: "${returned?.returnNotes}".`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 10,
-      description: 'Contractor can see returned/requested changes',
-      passed: false,
+      scenarioNumber: 12,
+      description: 'Contractor can see returned/requested changes.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 11. Contractor can resubmit where workflow permits
+  // --------------------------------------------------------------------------
+  // Scenario 13: Contractor can revise and resubmit where workflow permits.
+  // --------------------------------------------------------------------------
   let resubmittedPackage: any;
   try {
     // Contractor updates draft / notes
@@ -348,24 +433,27 @@ async function runTests() {
     );
 
     const passed =
+      resubmittedPackage &&
       resubmittedPackage.status === 'SUBMITTED' &&
       resubmittedPackage.revisionNumber === 2;
     results.push({
-      scenarioNumber: 11,
-      description: 'Contractor can resubmit where workflow permits',
-      passed,
-      notes: `Resubmitted as Rev #${resubmittedPackage.revisionNumber}, Status: ${resubmittedPackage.status}`,
+      scenarioNumber: 13,
+      description: 'Contractor can revise and resubmit where workflow permits.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Resubmitted package as Revision #${resubmittedPackage?.revisionNumber} with status SUBMITTED.`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 11,
-      description: 'Contractor can resubmit where workflow permits',
-      passed: false,
+      scenarioNumber: 13,
+      description: 'Contractor can revise and resubmit where workflow permits.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 12. Senior Project Director can accept the technical submission
+  // --------------------------------------------------------------------------
+  // Scenario 14: Senior Project Director can ACCEPT_TECHNICAL_SUBMISSION.
+  // --------------------------------------------------------------------------
   let acceptedReview: any;
   let updatedMilestone: any;
   try {
@@ -386,21 +474,23 @@ async function runTests() {
       decisionResult.submission.status === 'ACCEPTED' &&
       (updatedMilestone.status === 'QA_QC_HOLD' || updatedMilestone.status === 'READY_FOR_OWNER_REVIEW');
     results.push({
-      scenarioNumber: 12,
-      description: 'Senior Project Director can accept the technical submission',
-      passed,
-      notes: `Accepted with decision: ${acceptedReview.decision}, Milestone advanced to: ${updatedMilestone.status}`,
+      scenarioNumber: 14,
+      description: 'Senior Project Director can ACCEPT_TECHNICAL_SUBMISSION.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: `Technical acceptance granted. Milestone advanced to ${updatedMilestone.status} (awaiting QA/QC).`,
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 12,
-      description: 'Senior Project Director can accept the technical submission',
-      passed: false,
+      scenarioNumber: 14,
+      description: 'Senior Project Director can ACCEPT_TECHNICAL_SUBMISSION.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 13. General Contractor cannot technically approve their own work
+  // --------------------------------------------------------------------------
+  // Scenario 15: General Contractor cannot technically accept their own submission.
+  // --------------------------------------------------------------------------
   try {
     let blockedAsExpected = false;
     try {
@@ -414,199 +504,401 @@ async function runTests() {
         }
       );
     } catch (err: any) {
-      if (err.statusCode === 403 || err.code === 'ROLE_PERMISSION_DENIED') {
+      if (err.statusCode === 403 && (err.code === 'CONTRACTOR_CANNOT_APPROVE_OWN_WORK' || err.code === 'DIRECTOR_ROLE_REQUIRED')) {
         blockedAsExpected = true;
       }
     }
     results.push({
-      scenarioNumber: 13,
-      description: 'General Contractor cannot technically approve their own work',
-      passed: blockedAsExpected,
+      scenarioNumber: 15,
+      description: 'General Contractor cannot technically accept their own submission.',
+      status: blockedAsExpected ? 'PASS' : 'FAIL',
       notes: blockedAsExpected
-        ? 'Self-approval strictly blocked server-side with 403'
-        : 'Security breach: General Contractor was allowed to approve work!',
+        ? 'Self-acceptance strictly blocked with HTTP 403 CONTRACTOR_CANNOT_APPROVE_OWN_WORK.'
+        : 'Security violation: Contractor was able to accept their own submission.',
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 13,
-      description: 'General Contractor cannot technically approve their own work',
-      passed: false,
+      scenarioNumber: 15,
+      description: 'General Contractor cannot technically accept their own submission.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 14. Unauthorized user cannot mutate milestone/submission/evidence state
+  // --------------------------------------------------------------------------
+  // Scenario 16: General Contractor cannot directly set the milestone to APPROVED.
+  // --------------------------------------------------------------------------
   try {
-    let mutateBlocked = false;
+    let contractorDirectApprovalBlocked = false;
+    // Attempt 1: Contractor trying to call a technical review approval
     try {
-      await milestoneService.createEvidence(PROJECT_ID, UNAUTHORIZED_UID, {
-        title: 'Fake Evidence',
-        description: 'Unauthorized injection',
-        evidenceType: 'DOCUMENT',
-        fileName: 'fake.pdf',
-        mimeType: 'application/pdf',
-        fileSize: 1000,
-        storageReference: 'FAKE-123',
-      });
+      await milestoneService.decideTechnicalReview(
+        PROJECT_ID,
+        resubmittedPackage.id,
+        CONTRACTOR_UID,
+        {
+          decision: 'ACCEPT_TECHNICAL_SUBMISSION',
+          reviewNotes: 'Bypassing governance to set APPROVED.',
+        }
+      );
     } catch (err: any) {
       if (err.statusCode === 403) {
-        mutateBlocked = true;
+        contractorDirectApprovalBlocked = true;
+      }
+    }
+
+    // Verify milestone status remains non-APPROVED
+    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
+    const passed = contractorDirectApprovalBlocked && m?.status !== 'APPROVED';
+    results.push({
+      scenarioNumber: 16,
+      description: 'General Contractor cannot directly set the milestone to APPROVED.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? `Direct approval strictly prohibited server-side. Milestone status remains "${m?.status}".`
+        : 'Contractor improperly mutated milestone to APPROVED.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 16,
+      description: 'General Contractor cannot directly set the milestone to APPROVED.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 17: Unauthorized external user cannot create or mutate project evidence.
+  // --------------------------------------------------------------------------
+  try {
+    let evidenceBlocked = false;
+    try {
+      await milestoneService.createEvidence(PROJECT_ID, UNAUTHORIZED_UID, {
+        title: 'Malicious External Evidence',
+        description: 'Unauthorized injection attempt',
+        evidenceType: 'DOCUMENT',
+        fileName: 'malicious.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 1024,
+        storageReference: 'ATTACK-REF-001',
+      });
+    } catch (err: any) {
+      if (err.statusCode === 403 && err.code === 'INSUFFICIENT_PROJECT_AUTHORITY') {
+        evidenceBlocked = true;
       }
     }
     results.push({
-      scenarioNumber: 14,
-      description: 'Unauthorized user cannot mutate milestone/submission/evidence state',
-      passed: mutateBlocked,
-      notes: mutateBlocked ? 'Mutation rejected with 403 Forbidden' : 'Failed to block unauthorized mutation',
+      scenarioNumber: 17,
+      description: 'Unauthorized external user cannot create or mutate project evidence.',
+      status: evidenceBlocked ? 'PASS' : 'FAIL',
+      notes: evidenceBlocked
+        ? 'Unauthorized evidence creation strictly blocked with HTTP 403 INSUFFICIENT_PROJECT_AUTHORITY.'
+        : 'Unauthorized user succeeded in creating evidence.',
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 14,
-      description: 'Unauthorized user cannot mutate milestone/submission/evidence state',
-      passed: false,
+      scenarioNumber: 17,
+      description: 'Unauthorized external user cannot create or mutate project evidence.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 15. Invalid state transitions are rejected server-side
+  // --------------------------------------------------------------------------
+  // Scenario 18: Unauthorized external user cannot submit or technically review milestone packages.
+  // --------------------------------------------------------------------------
   try {
-    let invalidTransitionBlocked = false;
+    let submitBlocked = false;
+    let reviewBlocked = false;
+
     try {
-      // Trying to submit an already ACCEPTED submission
+      await milestoneService.submitPackage(PROJECT_ID, resubmittedPackage.id, UNAUTHORIZED_UID, 'Malicious submit');
+    } catch (err: any) {
+      if (err.statusCode === 403) submitBlocked = true;
+    }
+
+    try {
+      await milestoneService.decideTechnicalReview(
+        PROJECT_ID,
+        resubmittedPackage.id,
+        UNAUTHORIZED_UID,
+        { decision: 'ACCEPT_TECHNICAL_SUBMISSION', reviewNotes: 'Malicious review' }
+      );
+    } catch (err: any) {
+      if (err.statusCode === 403) reviewBlocked = true;
+    }
+
+    const passed = submitBlocked && reviewBlocked;
+    results.push({
+      scenarioNumber: 18,
+      description: 'Unauthorized external user cannot submit or technically review milestone packages.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? 'Both package submission and technical review endpoints strictly blocked unauthorized actor with HTTP 403.'
+        : 'Failed to block unauthorized submission or review.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 18,
+      description: 'Unauthorized external user cannot submit or technically review milestone packages.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 19: Invalid workflow state transitions are rejected server-side.
+  // --------------------------------------------------------------------------
+  try {
+    let transition1Blocked = false; // Cannot re-submit an already ACCEPTED package
+    let transition2Blocked = false; // Cannot review an already ACCEPTED package
+
+    try {
       await milestoneService.submitPackage(
         PROJECT_ID,
         resubmittedPackage.id,
         CONTRACTOR_UID,
-        'Trying to re-submit accepted package'
+        'Attempting re-submission on accepted package'
       );
     } catch (err: any) {
-      if (err.statusCode === 400 || err.code === 'INVALID_SUBMISSION_STATE_TRANSITION') {
-        invalidTransitionBlocked = true;
+      if (err.statusCode === 400 && err.code === 'INVALID_SUBMISSION_STATE_TRANSITION') {
+        transition1Blocked = true;
       }
     }
+
+    try {
+      await milestoneService.decideTechnicalReview(
+        PROJECT_ID,
+        resubmittedPackage.id,
+        DIRECTOR_UID,
+        { decision: 'ACCEPT_TECHNICAL_SUBMISSION', reviewNotes: 'Double decision' }
+      );
+    } catch (err: any) {
+      if (err.statusCode === 400 && err.code === 'INVALID_REVIEW_STATE_TRANSITION') {
+        transition2Blocked = true;
+      }
+    }
+
+    const passed = transition1Blocked && transition2Blocked;
     results.push({
-      scenarioNumber: 15,
-      description: 'Invalid state transitions are rejected server-side',
-      passed: invalidTransitionBlocked,
-      notes: invalidTransitionBlocked
-        ? 'Invalid transition rejected server-side with 400'
-        : 'Failed to reject invalid transition',
+      scenarioNumber: 19,
+      description: 'Invalid workflow state transitions are rejected server-side.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? 'Re-submission and duplicate reviews on ACCEPTED package rejected server-side with HTTP 400.'
+        : 'Failed to reject invalid workflow transitions.',
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 15,
-      description: 'Invalid state transitions are rejected server-side',
-      passed: false,
+      scenarioNumber: 19,
+      description: 'Invalid workflow state transitions are rejected server-side.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 16. Audit events persist for governed transitions
+  // --------------------------------------------------------------------------
+  // Scenario 20: Audit events persist for governed transitions.
+  // --------------------------------------------------------------------------
   try {
     const auditEvents = await auditEventRepository.listByProject(PROJECT_ID);
-    const hasMilestoneEvents = auditEvents.some(
-      (e: any) =>
-        e.action === 'CONTRACTOR_SUBMISSION_SUBMITTED' ||
-        e.action === 'TECHNICAL_SUBMISSION_ACCEPTED' ||
-        e.action === 'EVIDENCE_ADDED'
+    const recordedActions = new Set(auditEvents.map((e: any) => e.action));
+    const hasMilestoneStarted = recordedActions.has('MILESTONE_STARTED');
+    const hasEvidenceAdded = recordedActions.has('EVIDENCE_ADDED');
+    const hasDrafted = recordedActions.has('CONTRACTOR_SUBMISSION_DRAFTED');
+    const hasSubmitted = recordedActions.has('CONTRACTOR_SUBMISSION_SUBMITTED');
+    const hasReviewStarted = recordedActions.has('TECHNICAL_REVIEW_STARTED');
+    const hasChangesRequested = recordedActions.has('TECHNICAL_REVIEW_CHANGES_REQUESTED');
+    const hasAccepted = recordedActions.has('TECHNICAL_SUBMISSION_ACCEPTED');
+
+    const passed =
+      hasMilestoneStarted &&
+      hasEvidenceAdded &&
+      hasDrafted &&
+      hasSubmitted &&
+      hasReviewStarted &&
+      hasChangesRequested &&
+      hasAccepted;
+
+    results.push({
+      scenarioNumber: 20,
+      description: 'Audit events persist for governed transitions.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? `All 7 required lifecycle actions verified in audit ledger (${auditEvents.length} total events recorded).`
+        : 'Missing required audit event types in project audit history.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 20,
+      description: 'Audit events persist for governed transitions.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 21: Technical acceptance is NOT represented as QA/QC approval.
+  // --------------------------------------------------------------------------
+  try {
+    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
+    const statusVal = (m as any)?.status;
+    const qaQcVal = (m as any)?.qaQcStatus;
+    const passed =
+      statusVal === 'QA_QC_HOLD' &&
+      qaQcVal === 'PENDING' &&
+      statusVal !== 'APPROVED' &&
+      statusVal !== 'COMPLETE';
+    results.push({
+      scenarioNumber: 21,
+      description: 'Technical acceptance is NOT represented as QA/QC approval.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? `Milestone is held at "QA_QC_HOLD", qaQcStatus is "PENDING". QA/QC gate strictly deferred to Sprint 04C.`
+        : 'Governance failure: Milestone was falsely marked as QA/QC approved.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 21,
+      description: 'Technical acceptance is NOT represented as QA/QC approval.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 22: Technical acceptance is NOT represented as Owner approval.
+  // --------------------------------------------------------------------------
+  try {
+    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
+    const statusVal = (m as any)?.status;
+    const ownerVal = (m as any)?.ownerDecisionStatus;
+    const passed =
+      ownerVal === 'PENDING' &&
+      statusVal !== 'APPROVED' &&
+      statusVal !== 'COMPLETE';
+    results.push({
+      scenarioNumber: 22,
+      description: 'Technical acceptance is NOT represented as Owner approval.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? `Owner approval boundary maintained. Status is not APPROVED, ownerDecisionStatus is PENDING.`
+        : 'Governance failure: Milestone was falsely marked as Owner approved.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 22,
+      description: 'Technical acceptance is NOT represented as Owner approval.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 23: Technical acceptance is NOT represented as PAYMENT AUTHORIZATION.
+  // --------------------------------------------------------------------------
+  try {
+    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
+    const finVal = (m as any)?.financialStatus;
+    const passed =
+      finVal === 'AWAITING_GOVERNANCE' &&
+      finVal !== 'AUTHORIZED_PENDING_SETTLEMENT' &&
+      finVal !== 'PAID';
+    results.push({
+      scenarioNumber: 23,
+      description: 'Technical acceptance is NOT represented as PAYMENT AUTHORIZATION.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? `Financial status remains "AWAITING_GOVERNANCE". Payment authorization boundary respected.`
+        : 'Governance failure: Milestone was falsely represented as authorized for payment.',
+    });
+  } catch (err: any) {
+    results.push({
+      scenarioNumber: 23,
+      description: 'Technical acceptance is NOT represented as PAYMENT AUTHORIZATION.',
+      status: 'FAIL',
+      notes: err.message,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Scenario 24: No milestone/submission state is falsely represented as: PAID, SETTLED, FUNDS_RELEASED.
+  // --------------------------------------------------------------------------
+  try {
+    const allMilestones = await milestoneRepository.listMilestonesByProject(PROJECT_ID);
+    const allSubmissions = await submissionRepository.listSubmissionsByProject(PROJECT_ID);
+
+    const hasFakePaidMilestone = allMilestones.some(
+      (m: any) =>
+        m.status === 'PAID' ||
+        m.status === 'SETTLED' ||
+        m.financialStatus === 'PAID' ||
+        (m as any).fundsReleased === true
     );
+
+    const hasFakePaidSubmission = allSubmissions.some(
+      (s: any) =>
+        s.status === 'PAID' ||
+        s.status === 'SETTLED'
+    );
+
+    const passed = !hasFakePaidMilestone && !hasFakePaidSubmission;
     results.push({
-      scenarioNumber: 16,
-      description: 'Audit events persist for governed transitions',
-      passed: hasMilestoneEvents,
-      notes: `Recorded ${auditEvents.length} audit events for project. Milestone audit actions verified.`,
+      scenarioNumber: 24,
+      description: 'No milestone/submission state is falsely represented as: PAID, SETTLED, FUNDS_RELEASED.',
+      status: passed ? 'PASS' : 'FAIL',
+      notes: passed
+        ? 'Zero premature settlement, payment, or fund release states exist across all milestones and submissions.'
+        : 'Financial boundary violation: Premature settlement or paid state detected.',
     });
   } catch (err: any) {
     results.push({
-      scenarioNumber: 16,
-      description: 'Audit events persist for governed transitions',
-      passed: false,
+      scenarioNumber: 24,
+      description: 'No milestone/submission state is falsely represented as: PAID, SETTLED, FUNDS_RELEASED.',
+      status: 'FAIL',
       notes: err.message,
     });
   }
 
-  // 17. No technical acceptance is falsely represented as QA/QC approval
-  try {
-    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
-    // Milestone status must NOT be APPROVED or QA_QC_PASSED; it must be QA_QC_HOLD (if requires QAQC) or READY_FOR_OWNER_REVIEW
-    const notFalselyQcApproved =
-      m?.status !== 'APPROVED' &&
-      m?.status !== 'COMPLETE';
-    results.push({
-      scenarioNumber: 17,
-      description: 'No technical acceptance is falsely represented as QA/QC approval',
-      passed: notFalselyQcApproved,
-      notes: `Milestone status after director acceptance: "${m?.status}" (Awaiting QA/QC gate in Sprint 04C)`,
-    });
-  } catch (err: any) {
-    results.push({
-      scenarioNumber: 17,
-      description: 'No technical acceptance is falsely represented as QA/QC approval',
-      passed: false,
-      notes: err.message,
-    });
-  }
-
-  // 18. No technical acceptance is falsely represented as Owner approval
-  try {
-    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
-    const notFalselyOwnerApproved = m?.status !== 'APPROVED';
-    results.push({
-      scenarioNumber: 18,
-      description: 'No technical acceptance is falsely represented as Owner approval',
-      passed: notFalselyOwnerApproved,
-      notes: `Owner approval boundary maintained. Current status is "${m?.status}"`,
-    });
-  } catch (err: any) {
-    results.push({
-      scenarioNumber: 18,
-      description: 'No technical acceptance is falsely represented as Owner approval',
-      passed: false,
-      notes: err.message,
-    });
-  }
-
-  // 19. No technical acceptance is falsely represented as payment or settlement
-  try {
-    const m = await milestoneRepository.getMilestoneById(targetMilestone.id);
-    // Milestone should not have any PAID, SETTLED, or FUNDS_RELEASED status
-    const notFalselySettled = (m as any)?.status !== 'PAID' && (m as any)?.status !== 'SETTLED';
-    results.push({
-      scenarioNumber: 19,
-      description: 'No technical acceptance is falsely represented as payment or settlement',
-      passed: notFalselySettled,
-      notes: 'No financial settlement flags applied. Financial boundary strictly respected.',
-    });
-  } catch (err: any) {
-    results.push({
-      scenarioNumber: 19,
-      description: 'No technical acceptance is falsely represented as payment or settlement',
-      passed: false,
-      notes: err.message,
-    });
-  }
-
-  console.log('\n=== TEST RESULTS SUMMARY ===\n');
+  // --------------------------------------------------------------------------
+  // Print Detailed Test Summary
+  // --------------------------------------------------------------------------
+  console.log('\n=== EXACT 24-SCENARIO ACCEPTANCE RESULTS ===\n');
   let passCount = 0;
+  let failCount = 0;
+  let notTestedCount = 0;
+
   for (const r of results) {
-    const status = r.passed ? '✅ PASS' : '❌ FAIL';
-    if (r.passed) passCount++;
-    console.log(`Scenario ${r.scenarioNumber}: ${status} - ${r.description}`);
+    const icon = r.status === 'PASS' ? '✅ PASS' : r.status === 'FAIL' ? '❌ FAIL' : '⏸️ NOT TESTED';
+    if (r.status === 'PASS') passCount++;
+    else if (r.status === 'FAIL') failCount++;
+    else notTestedCount++;
+
+    console.log(`${r.scenarioNumber.toString().padStart(2, ' ')}. [${r.status}] ${r.description}`);
     if (r.notes) {
-      console.log(`   Note: ${r.notes}`);
+      console.log(`    Note: ${r.notes}`);
     }
   }
 
-  console.log(`\nTOTAL: ${passCount} / ${results.length} PASSED`);
-  if (passCount === results.length) {
-    console.log('🎉 ALL 19 SPRINT 04B TEST SCENARIOS PASSED WITH FULL GOVERNANCE COMPLIANCE!');
-  } else {
-    console.error('⚠️ SOME TESTS FAILED');
+  console.log(`\n============================================================`);
+  console.log(`TOTAL SCENARIOS: ${results.length}`);
+  console.log(`PASSED:         ${passCount}`);
+  console.log(`FAILED:         ${failCount}`);
+  console.log(`NOT TESTED:     ${notTestedCount}`);
+  console.log(`============================================================\n`);
+
+  if (failCount > 0) {
+    console.error('⚠️ ONE OR MORE ACCEPTANCE SCENARIOS FAILED');
     process.exit(1);
+  } else if (results.length !== 24) {
+    console.error(`⚠️ INCOMPLETE SUITE: Expected 24 scenarios, got ${results.length}`);
+    process.exit(1);
+  } else {
+    console.log('🎉 ALL 24 SPRINT 04B ACCEPTANCE SCENARIOS PASSED WITH FULL GOVERNANCE COMPLIANCE!');
   }
 }
 
 runTests().catch(err => {
-  console.error('Fatal test error:', err);
+  console.error('Fatal test execution error:', err);
   process.exit(1);
 });
