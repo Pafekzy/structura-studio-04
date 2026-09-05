@@ -449,7 +449,20 @@ export type AuditAction =
   | 'RFI_CREATED'
   | 'RFI_RESPONDED'
   | 'RFI_ACKNOWLEDGED'
-  | 'RFI_CLOSED';
+  | 'RFI_CLOSED'
+  | 'MILESTONE_CREATED'
+  | 'MILESTONE_STARTED'
+  | 'MILESTONE_UPDATED'
+  | 'EVIDENCE_ADDED'
+  | 'EVIDENCE_UPDATED'
+  | 'CONTRACTOR_SUBMISSION_DRAFTED'
+  | 'CONTRACTOR_SUBMISSION_SUBMITTED'
+  | 'CONTRACTOR_SUBMISSION_RESUBMITTED'
+  | 'TECHNICAL_REVIEW_STARTED'
+  | 'TECHNICAL_REVIEW_CHANGES_REQUESTED'
+  | 'TECHNICAL_SUBMISSION_ACCEPTED'
+  | 'TECHNICAL_SUBMISSION_ESCALATED'
+  | 'TECHNICAL_SUBMISSION_SENT_TO_QA_QC';
 
 export interface AuditEvent {
   id: string;
@@ -553,4 +566,223 @@ export interface RFI {
   createdAt: string;
   dueAt?: string;
   updatedAt: string;
+}
+
+// ==========================================
+// Project Operations: Milestones & Technical Review (Sprint 04B)
+// ==========================================
+
+export type ProjectMilestoneStatus =
+  | 'NOT_STARTED'
+  | 'IN_PROGRESS'
+  | 'SUBMITTED_FOR_REVIEW'
+  | 'TECHNICAL_REVIEW'
+  | 'QA_QC_HOLD'
+  | 'READY_FOR_OWNER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETE';
+
+export type MilestoneDiscipline =
+  | 'Substructure & Earthworks'
+  | 'Structural Concrete & Frame'
+  | 'Envelope & Curtain Wall'
+  | 'MEP Rough-In'
+  | 'Interior Fitout & Finishes'
+  | 'Commissioning & Handover';
+
+export type ContractorSubmissionStatus =
+  | 'NONE'
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'RETURNED'
+  | 'UNDER_REVIEW'
+  | 'ACCEPTED'
+  | 'REJECTED';
+
+export type TechnicalReviewDecision =
+  | 'REQUEST_CHANGES'
+  | 'ACCEPT_TECHNICAL_SUBMISSION'
+  | 'ESCALATE'
+  | 'SEND_TO_QA_QC';
+
+export type TechnicalReviewStatus =
+  | 'NONE'
+  | 'PENDING'
+  | 'IN_REVIEW'
+  | 'CHANGES_REQUESTED'
+  | 'ACCEPTED'
+  | 'ESCALATED'
+  | 'SENT_TO_QA_QC';
+
+export type QaQcStatus =
+  | 'NOT_REQUIRED'
+  | 'PENDING'
+  | 'PASSED'
+  | 'FAILED'
+  | 'ON_HOLD';
+
+export type OwnerDecisionStatus =
+  | 'NOT_REQUIRED'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export type MilestoneFinancialStatus =
+  | 'NOT_ELIGIBLE'
+  | 'AWAITING_GOVERNANCE'
+  | 'AUTHORIZED_PENDING_SETTLEMENT'
+  | 'PAID';
+
+export interface ProjectMilestone {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  sequence: number;
+  discipline: MilestoneDiscipline | string;
+  status: ProjectMilestoneStatus;
+
+  // Governance requirements
+  requiresProjectDirectorReview: boolean;
+  requiresQaQcReview: boolean;
+  requiresOwnerApproval: boolean;
+
+  // Governed workflow sub-statuses
+  contractorSubmissionStatus: ContractorSubmissionStatus;
+  technicalReviewStatus?: TechnicalReviewStatus;
+  qaQcStatus: QaQcStatus;
+  ownerDecisionStatus: OwnerDecisionStatus;
+  financialStatus: MilestoneFinancialStatus;
+
+  // Timeline & tracking
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+  startedAt?: string;
+  submittedAt?: string;
+  technicalReviewStartedAt?: string;
+  technicalReviewCompletedAt?: string;
+  qaQcCompletedAt?: string;
+  ownerApprovedAt?: string;
+
+  // Budget & Progress
+  costAllocationUSD?: number;
+  progressPercentage?: number;
+
+  // Associations
+  relatedEvidenceIds: string[];
+  activeSubmissionId?: string;
+  latestReviewId?: string;
+
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: Project Evidence (Sprint 04B)
+// ==========================================
+
+export type EvidenceType =
+  | 'SITE_PHOTO'
+  | 'DRAWING'
+  | 'DOCUMENT'
+  | 'TEST_RESULT'
+  | 'PROGRESS_RECORD'
+  | 'TECHNICAL_ATTACHMENT'
+  | 'CONTRACTOR_SUBMISSION'
+  | 'OTHER';
+
+export type EvidenceStorageProvider =
+  | 'METADATA_ONLY'
+  | 'LOCAL_SANDBOX'
+  | 'CLOUD_STORAGE_PROVISIONAL';
+
+export type EvidenceStorageStatus =
+  | 'RECORDED_METADATA'
+  | 'REFERENCED'
+  | 'STORED';
+
+export interface ProjectEvidence {
+  id: string;
+  projectId: string;
+  milestoneId?: string;
+
+  uploadedByUserId: string;
+  uploadedByRole: ProjectRole;
+  uploadedByName: string;
+
+  evidenceType: EvidenceType;
+  title: string;
+  description: string;
+
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+
+  storageProvider: EvidenceStorageProvider;
+  storageStatus: EvidenceStorageStatus;
+  storageReference: string;
+
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, any>;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: Contractor Submissions (Sprint 04B)
+// ==========================================
+
+export interface ContractorMilestoneSubmission {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+
+  submittedByUserId: string;
+  submittedByRole: ProjectRole;
+  submittedByName: string;
+
+  status: ContractorSubmissionStatus;
+  title: string;
+  summary: string;
+  contractorNotes: string;
+
+  evidenceIds: string[];
+  revisionNumber: number;
+
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+  returnedAt?: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+
+  technicalReviewId?: string;
+  returnNotes?: string;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: Technical Review (Sprint 04B)
+// ==========================================
+
+export interface ProjectDirectorTechnicalReview {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  submissionId: string;
+
+  reviewedByUserId: string;
+  reviewedByRole: ProjectRole;
+  reviewedByName: string;
+
+  decision: TechnicalReviewDecision;
+  reviewNotes: string;
+
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  isDemo?: boolean;
 }
