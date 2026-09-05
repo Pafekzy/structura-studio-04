@@ -618,19 +618,23 @@ export type TechnicalReviewStatus =
 export type QaQcStatus =
   | 'NOT_REQUIRED'
   | 'PENDING'
+  | 'IN_PROGRESS'
   | 'PASSED'
   | 'FAILED'
-  | 'ON_HOLD';
+  | 'ON_HOLD'
+  | 'REINSPECTION_REQUIRED';
 
 export type OwnerDecisionStatus =
   | 'NOT_REQUIRED'
   | 'PENDING'
   | 'APPROVED'
+  | 'RETURNED'
   | 'REJECTED';
 
 export type MilestoneFinancialStatus =
   | 'NOT_ELIGIBLE'
   | 'AWAITING_GOVERNANCE'
+  | 'AUTHORIZED_FOR_FINANCIAL_PROCESSING'
   | 'AUTHORIZED_PENDING_SETTLEMENT'
   | 'PAID';
 
@@ -673,6 +677,10 @@ export interface ProjectMilestone {
   relatedEvidenceIds: string[];
   activeSubmissionId?: string;
   latestReviewId?: string;
+  activeInspectionId?: string;
+  activeNcrId?: string;
+  latestOwnerDecisionId?: string;
+  aiAnalysisId?: string;
 
   createdByUserId: string;
   createdAt: string;
@@ -784,5 +792,176 @@ export interface ProjectDirectorTechnicalReview {
   createdAt: string;
   startedAt?: string;
   completedAt?: string;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: QA/QC Inspection (Sprint 04C)
+// ==========================================
+
+export type QAQCInspectionStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'PASSED'
+  | 'FAILED'
+  | 'HOLD'
+  | 'REINSPECTION_REQUIRED';
+
+export type QAQCInspectionType =
+  | 'STRUCTURAL'
+  | 'CONCRETE_POUR'
+  | 'REBAR'
+  | 'WATERPROOFING'
+  | 'MEP_PENETRATION'
+  | 'GENERAL';
+
+export interface QAQCInspection {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  submissionId?: string;
+  technicalReviewId?: string;
+
+  inspectorUserId: string;
+  inspectorRole: ProjectRole;
+  inspectorName: string;
+
+  inspectionStatus: QAQCInspectionStatus;
+  inspectionType: QAQCInspectionType | string;
+  inspectionNotes: string;
+
+  evidenceIds: string[];
+  aiInspectionAnalysisId?: string;
+
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: Non-Conformance Reports (NCR) (Sprint 04C)
+// ==========================================
+
+export type NCRStatus =
+  | 'OPEN'
+  | 'CORRECTIVE_ACTION_REQUIRED'
+  | 'CORRECTIVE_ACTION_SUBMITTED'
+  | 'REINSPECTION_REQUIRED'
+  | 'CLOSED';
+
+export type NCRSeverity =
+  | 'MINOR'
+  | 'MODERATE'
+  | 'MAJOR'
+  | 'CRITICAL';
+
+export interface NonConformanceReport {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  inspectionId?: string;
+
+  number: string;
+  title: string;
+  description: string;
+  severity: NCRSeverity;
+
+  raisedByUserId: string;
+  raisedByRole: ProjectRole;
+  raisedByName: string;
+
+  assignedToUserId: string;
+  assignedToRole: ProjectRole;
+  assignedToName: string;
+
+  status: NCRStatus;
+
+  requirementReference: string;
+  observedCondition: string;
+  correctiveActionRequired: string;
+
+  contractorResponse?: string;
+  correctiveActionDescription?: string;
+  correctiveEvidenceIds?: string[];
+
+  reinspectionNotes?: string;
+
+  createdAt: string;
+  correctiveActionSubmittedAt?: string;
+  reinspectionAt?: string;
+  closedAt?: string;
+
+  closedByUserId?: string;
+  closedByName?: string;
+  isDemo?: boolean;
+}
+
+// Alias for convenience
+export type NCR = NonConformanceReport;
+
+// ==========================================
+// Project Operations: AI Inspection Evidence (Sprint 04C)
+// ==========================================
+
+export type AIInspectionAnalysisStatus =
+  | 'PENDING'
+  | 'COMPLETED'
+  | 'UNAVAILABLE'
+  | 'ANALYSIS_FAILED'
+  | 'HUMAN_REVIEW_REQUIRED';
+
+export interface AIInspectionAnalysis {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+  inspectionId?: string;
+
+  evidenceIds: string[];
+  analysisStatus: AIInspectionAnalysisStatus;
+  model: string; // strictly 'gemini-3.7-flash'
+
+  summary: string;
+  observations: string[];
+  potentialIssues: string[];
+  riskIndicators: string[];
+  recommendations: string[];
+
+  humanReviewRequired: boolean; // Always true: preliminary analysis only
+  rawResponseText?: string;
+  errorMessage?: string;
+
+  createdAt: string;
+  isDemo?: boolean;
+}
+
+// ==========================================
+// Project Operations: Owner Governance Decisions (Sprint 04C)
+// ==========================================
+
+export type OwnerDecisionType =
+  | 'APPROVE'
+  | 'RETURN'
+  | 'REJECT';
+
+export interface OwnerMilestoneDecision {
+  id: string;
+  projectId: string;
+  milestoneId: string;
+
+  decidedByUserId: string;
+  decidedByRole: ProjectRole;
+  decidedByName: string;
+
+  decision: OwnerDecisionType;
+  decisionNotes: string;
+
+  financialAuthorized: boolean;
+  financialStatus: MilestoneFinancialStatus;
+  financialProviderStatus: 'FINANCIAL_PROVIDER_NOT_CONNECTED' | 'NOT_CONFIGURED';
+
+  createdAt: string;
+  decidedAt: string;
   isDemo?: boolean;
 }

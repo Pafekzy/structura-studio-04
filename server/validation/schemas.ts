@@ -197,3 +197,52 @@ export const technicalReviewDecisionSchema = z.object({
   ]),
   reviewNotes: z.string().min(5, 'Review notes must be at least 5 characters').max(4000),
 });
+
+// Part N: QA/QC Inspection Schemas (Sprint 04C)
+export const startQAQCInspectionSchema = z.object({
+  inspectionType: z.string().min(2).max(100),
+  inspectionNotes: z.string().min(5, 'Inspection notes must be at least 5 characters').max(4000),
+  evidenceIds: z.array(z.string()).optional().default([]),
+});
+
+export const decideQAQCInspectionSchema = z.object({
+  decision: z.enum(['PASSED', 'FAILED', 'HOLD', 'REINSPECTION_REQUIRED']),
+  inspectionNotes: z.string().min(5, 'Inspection notes must be at least 5 characters').max(4000),
+  evidenceIds: z.array(z.string()).optional().default([]),
+});
+
+// Part O: Non-Conformance Report (NCR) Schemas (Sprint 04C)
+export const createNCRSchema = z.object({
+  inspectionId: z.string().optional(),
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(3000),
+  severity: z.enum(['MINOR', 'MODERATE', 'MAJOR', 'CRITICAL']),
+  requirementReference: z.string().min(3).max(300),
+  observedCondition: z.string().min(5).max(3000),
+  correctiveActionRequired: z.string().min(5).max(3000),
+  assignedToUserId: z.string().optional(),
+});
+
+export const submitCorrectiveActionSchema = z.object({
+  contractorResponse: z.string().min(5, 'Response must be at least 5 characters').max(3000),
+  correctiveActionDescription: z.string().min(10, 'Description of corrective action must be at least 10 characters').max(3000),
+  correctiveEvidenceIds: z.array(z.string()).optional().default([]),
+});
+
+export const closeNCRSchema = z.object({
+  reinspectionNotes: z.string().min(5, 'Re-inspection notes required').max(3000),
+  decision: z.enum(['CLOSE', 'REQUIRE_REINSPECTION', 'REJECT_CORRECTIVE_ACTION']),
+});
+
+// Part P: AI Visual Inspection Analysis Schema (Sprint 04C)
+export const requestAIInspectionSchema = z.object({
+  evidenceIds: z.array(z.string()).optional().default([]),
+  inspectionContext: z.string().max(1000).optional(),
+});
+
+// Part Q: Owner Milestone Governance Decision Schema (Sprint 04C)
+export const ownerDecisionSchema = z.object({
+  decision: z.enum(['APPROVE', 'RETURN', 'REJECT']),
+  decisionNotes: z.string().min(5, 'Decision notes must be at least 5 characters').max(4000),
+});
+

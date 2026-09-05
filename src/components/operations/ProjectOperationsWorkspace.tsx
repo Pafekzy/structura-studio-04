@@ -17,6 +17,10 @@ import { DirectLinePanel } from './DirectLinePanel';
 import { RFIRegisterPanel } from './RFIRegisterPanel';
 import { MilestonesRegisterPanel } from './MilestonesRegisterPanel';
 import { ProjectEvidencePanel } from './ProjectEvidencePanel';
+import { QAQCInspectionPanel } from './QAQCInspectionPanel';
+import { NCRRegisterPanel } from './NCRRegisterPanel';
+import { AIInspectionPanel } from './AIInspectionPanel';
+import { OwnerDecisionPanel } from './OwnerDecisionPanel';
 import { useAuth } from '../../context/AuthContext';
 
 interface ProjectOperationsWorkspaceProps {
@@ -31,7 +35,9 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
   onOpenAdvisorModal,
 }) => {
   const { userProfile, user } = useAuth();
-  const [activeSubTab, setActiveSubTab] = useState<'direct_line' | 'rfis' | 'milestones' | 'evidence'>('milestones');
+  const [activeSubTab, setActiveSubTab] = useState<
+    'milestones' | 'qaqc' | 'ncrs' | 'ai_inspection' | 'owner_decision' | 'evidence' | 'direct_line' | 'rfis'
+  >('milestones');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -100,7 +106,7 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
         <div className="flex flex-wrap items-center gap-2 mt-8 pt-4 border-t border-white/10">
           <button
             onClick={() => setActiveSubTab('milestones')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
               activeSubTab === 'milestones'
                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
@@ -111,32 +117,80 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
           </button>
 
           <button
+            onClick={() => setActiveSubTab('qaqc')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'qaqc'
+                ? 'bg-purple-500 text-white shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>QA/QC Inspection Gate</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('ncrs')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'ncrs'
+                ? 'bg-rose-500 text-white shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Non-Conformance (NCR)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('ai_inspection')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'ai_inspection'
+                ? 'bg-amber-500 text-slate-950 shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI Visual Audit</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('owner_decision')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              activeSubTab === 'owner_decision'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Owner Decision Gate</span>
+          </button>
+
+          <button
             onClick={() => setActiveSubTab('evidence')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
               activeSubTab === 'evidence'
                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Project Evidence Register</span>
+            <span>Project Evidence</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('direct_line')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
               activeSubTab === 'direct_line'
                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
-            <span>Direct Line Communication</span>
+            <span>Direct Line</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('rfis')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
               activeSubTab === 'rfis'
                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
@@ -151,6 +205,14 @@ export const ProjectOperationsWorkspace: React.FC<ProjectOperationsWorkspaceProp
       {/* Sub-tab view */}
       {activeSubTab === 'milestones' ? (
         <MilestonesRegisterPanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'qaqc' ? (
+        <QAQCInspectionPanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'ncrs' ? (
+        <NCRRegisterPanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'ai_inspection' ? (
+        <AIInspectionPanel projectId={project.id} isDemo={project.isDemo} />
+      ) : activeSubTab === 'owner_decision' ? (
+        <OwnerDecisionPanel projectId={project.id} isDemo={project.isDemo} />
       ) : activeSubTab === 'evidence' ? (
         <ProjectEvidencePanel projectId={project.id} isDemo={project.isDemo} />
       ) : activeSubTab === 'direct_line' ? (
